@@ -1,45 +1,45 @@
-// module.js — universal anti-skip + smoother playback + logging
+// module.js — Stable version (smooth anti-skip, full logging, all modules)
 
+// --- Get the module id from the URL ---
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
 
-// YouTube IDs for all modules
+// --- YouTube Video IDs ---
 const videoLinks = {
-  1: "-deVMu0kyik",
-  2: "qZkkgkMLsvI",
-  3: "5C_0X6G4ytI"
+  1: "-deVMu0kyik", // Vehicle Inspection
+  2: "qZkkgkMLsvI", // Basic Control Skills
+  3: "5C_0X6G4ytI"  // On-Road Driving
 };
 
-// Titles for logging and UI
+// --- Module Titles ---
 const titles = {
   1: "Vehicle Inspection",
   2: "Basic Control Skills",
   3: "On-Road Driving"
 };
 
-// Display correct title
+// --- Display correct title on page ---
 const titleElement = document.getElementById("moduleTitle");
 if (titleElement) titleElement.innerText = titles[id] || "Training Module";
 
-// Hide completion button initially
+// --- Hide Mark Complete button initially ---
 const completeBtn = document.getElementById("completeBtn");
 if (completeBtn) completeBtn.style.display = "none";
 
-// Google Sheet Logger URL
+// --- Google Sheets Logger URL ---
 const scriptURL =
   "https://script.google.com/macros/s/AKfycbzTygqxIMidgXjitFwwtn6QPxT1Vm8MJ_8zJ182oGvDBxC0_MipCOlCp4jalVmFILm9nA/exec";
 
 let player;
 let maxWatched = 0;
-let lastCheckedTime = 0;
 
-// ✅ Create the player when API is ready
+// ✅ Called when the YouTube API is ready
 function onYouTubeIframeAPIReady() {
   const videoId = videoLinks[id] || videoLinks[1];
   player = new YT.Player("player", {
-    videoId,
     height: "360",
     width: "640",
+    videoId: videoId,
     playerVars: { controls: 1, disablekb: 0 },
     events: {
       onReady: onPlayerReady,
@@ -48,27 +48,26 @@ function onYouTubeIframeAPIReady() {
   });
 }
 
-// ✅ Start tracking watch time smoothly
+// ✅ Start tracking watch time with better smoothing
 function onPlayerReady() {
   setInterval(() => {
-    if (!player || !player.getCurrentTime) return;
-    const current = player.getCurrentTime();
+    if (!player || !player.getCurrentTime || player.getPlayerState() !== YT.PlayerState.PLAYING) return;
 
-    // Allow a small 3-second drift tolerance to prevent jump-backs from buffering
-    if (current > maxWatched + 3) {
-      // Only trigger if they jumped forward more than 3 seconds
-      console.log("⏪ Jump detected, returning to", maxWatched.toFixed(2));
+    const current = player.getCurrentTime();
+    const delta = current - maxWatched;
+
+    // Only block if they clearly skip ahead more than 6 seconds and not near end
+    if (delta > 6 && current < player.getDuration() - 10) {
+      console.log("⏪ Skip detected — reverting to", maxWatched.toFixed(2));
       player.seekTo(maxWatched, true);
     } else if (current > maxWatched) {
-      // Normal watching, update progress
+      // Normal progress
       maxWatched = current;
     }
-
-    lastCheckedTime = current;
   }, 1000);
 }
 
-// ✅ Show button only after full completion
+// ✅ Detect when the video fully ends
 function onPlayerStateChange(event) {
   if (event.data === YT.PlayerState.ENDED) {
     completeBtn.style.display = "inline-block";
@@ -76,7 +75,7 @@ function onPlayerStateChange(event) {
   }
 }
 
-// ✅ Log completion to Google Sheet
+// ✅ Log completion to Google Sheets
 function completeModule() {
   const studentId = localStorage.getItem("studentId") || "Unknown";
   const moduleName = titles[id] || "Unknown Module";
@@ -104,5 +103,6 @@ function completeModule() {
     });
 }
 
+// --- Make functions available globally ---
 window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 window.completeModule = completeModule;
