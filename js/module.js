@@ -9,9 +9,9 @@ const titles = {
 
 document.getElementById("moduleTitle").innerText = titles[id] || "Training Module";
 const videoLinks = {
-  1: "https://www.youtube.com/embed/REPLACE_THIS_WITH_VIDEO_1",
-  2: "https://www.youtube.com/embed/REPLACE_THIS_WITH_VIDEO_2",
-  3: "https://www.youtube.com/embed/REPLACE_THIS_WITH_VIDEO_3"
+  1: "https://www.youtube.com/embed/5C_0X6G4ytI?feature=share",
+  2: "https://www.youtube.com/embed/qZkkgkMLsvI?feature=share",
+  3: "https://www.youtube.com/embed/-deVMu0kyik?feature=share"
 };
 
 document.getElementById("videoPlayer").src = videoLinks[id] || videoLinks[1];
