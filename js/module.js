@@ -1,82 +1,46 @@
-// module.js — robust URL/ID handling + anti-skip + logging
+// module.js — universal anti-skip + smoother playback + logging
 
-// --- Read module id from URL ---
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
 
-// --- Put exactly what you have here (URLs OR IDs are fine) ---
-const videoSources = {
-  1: "https://www.youtube.com/embed/-deVMu0kyik?feature=share",
-  2: "https://www.youtube.com/embed/qZkkgkMLsvI?feature=share",
-  3: "https://www.youtube.com/embed/5C_0X6G4ytI?feature=share"
+// YouTube IDs for all modules
+const videoLinks = {
+  1: "-deVMu0kyik",
+  2: "qZkkgkMLsvI",
+  3: "5C_0X6G4ytI"
 };
 
-// Titles used for display & logging
+// Titles for logging and UI
 const titles = {
   1: "Vehicle Inspection",
   2: "Basic Control Skills",
   3: "On-Road Driving"
 };
 
-// --- Extract a YouTube video ID from ANY common form ---
-function extractVideoId(input) {
-  if (!input) return null;
+// Display correct title
+const titleElement = document.getElementById("moduleTitle");
+if (titleElement) titleElement.innerText = titles[id] || "Training Module";
 
-  // If it already looks like a clean 11-char ID (can include - and _), return it
-  if (/^[A-Za-z0-9_-]{11}$/.test(input)) return input;
-
-  // Try to pull ID from typical URL formats:
-  // - https://www.youtube.com/watch?v=VIDEOID
-  // - https://youtube.com/shorts/VIDEOID
-  // - https://www.youtube.com/embed/VIDEOID
-  const patterns = [
-    /[?&]v=([A-Za-z0-9_-]{11})/,            // watch?v=VIDEOID
-    /\/shorts\/([A-Za-z0-9_-]{11})/,        // /shorts/VIDEOID
-    /\/embed\/([A-Za-z0-9_-]{11})/          // /embed/VIDEOID
-  ];
-
-  for (const re of patterns) {
-    const m = input.match(re);
-    if (m && m[1]) return m[1];
-  }
-
-  // Nothing matched
-  return null;
-}
-
-// Resolve the module's configured value into a clean videoId
-const configured = videoSources[id] || videoSources[1];
-const videoId = extractVideoId(configured);
-
-// Show title in the page
-document.getElementById("moduleTitle").innerText = titles[id] || "Training Module";
-
-// Button starts hidden
+// Hide completion button initially
 const completeBtn = document.getElementById("completeBtn");
 if (completeBtn) completeBtn.style.display = "none";
 
-// ✅ Your Google Apps Script endpoint (corrected)
+// Google Sheet Logger URL
 const scriptURL =
   "https://script.google.com/macros/s/AKfycbzTygqxIMidgXjitFwwtn6QPxT1Vm8MJ_8zJ182oGvDBxC0_MipCOlCp4jalVmFILm9nA/exec";
 
-// Debug logs to help verify on your end (View → Developer → Console)
-console.log("[ELDT] Module id:", id);
-console.log("[ELDT] Configured source:", configured);
-console.log("[ELDT] Extracted videoId:", videoId);
-
-// --- Build the YouTube player via IFrame API ---
 let player;
+let maxWatched = 0;
+let lastCheckedTime = 0;
 
+// ✅ Create the player when API is ready
 function onYouTubeIframeAPIReady() {
-  if (!videoId) {
-    alert("Could not determine a valid YouTube video for this module.");
-    return;
-  }
-
+  const videoId = videoLinks[id] || videoLinks[1];
   player = new YT.Player("player", {
+    videoId,
     height: "360",
     width: "640",
-    videoId: videoId,
+    playerVars: { controls: 1, disablekb: 0 },
     events: {
       onReady: onPlayerReady,
       onStateChange: onPlayerStateChange
@@ -84,23 +48,45 @@ function onYouTubeIframeAPIReady() {
   });
 }
 
-function onPlayerReady(e) {
-  // optional: autoplay (comment out if you don't want this)
-  // e.target.playVideo();
+// ✅ Start tracking watch time smoothly
+function onPlayerReady() {
+  setInterval(() => {
+    if (!player || !player.getCurrentTime) return;
+    const current = player.getCurrentTime();
+
+    // Allow a small 3-second drift tolerance to prevent jump-backs from buffering
+    if (current > maxWatched + 3) {
+      // Only trigger if they jumped forward more than 3 seconds
+      console.log("⏪ Jump detected, returning to", maxWatched.toFixed(2));
+      player.seekTo(maxWatched, true);
+    } else if (current > maxWatched) {
+      // Normal watching, update progress
+      maxWatched = current;
+    }
+
+    lastCheckedTime = current;
+  }, 1000);
 }
 
-function onPlayerStateChange(e) {
-  if (e.data === YT.PlayerState.ENDED) {
-    if (completeBtn) completeBtn.style.display = "inline-block";
+// ✅ Show button only after full completion
+function onPlayerStateChange(event) {
+  if (event.data === YT.PlayerState.ENDED) {
+    completeBtn.style.display = "inline-block";
     alert("✅ Video complete! You can now mark this module as finished.");
   }
 }
 
-// --- Log completion to Google Sheets ---
+// ✅ Log completion to Google Sheet
 function completeModule() {
   const studentId = localStorage.getItem("studentId") || "Unknown";
   const moduleName = titles[id] || "Unknown Module";
-  const payload = { studentId, module: moduleName, status: "Completed", score: "" };
+
+  const payload = {
+    studentId,
+    module: moduleName,
+    status: "Completed",
+    score: ""
+  };
 
   fetch(scriptURL, {
     method: "POST",
@@ -113,11 +99,10 @@ function completeModule() {
       window.location.href = "dashboard.html";
     })
     .catch((err) => {
-      console.error("[ELDT] Logging failed:", err);
+      console.error("Logging failed:", err);
       alert("⚠️ Something went wrong while logging progress.");
     });
 }
 
-// Expose functions globally (required by YouTube API and button onclick)
 window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 window.completeModule = completeModule;
