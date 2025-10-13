@@ -1,14 +1,13 @@
-// module.js — Stable version (smooth anti-skip, full logging, all modules)
+// module.js — Anti-skip + Attention Checker + Logging
 
-// --- Get the module id from the URL ---
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
 
-// --- YouTube Video IDs ---
+// --- Video List ---
 const videoLinks = {
-  1: "https://youtu.be/OfVfreyzyco", // Vehicle Inspection
-  2: "qZkkgkMLsvI", // Basic Control Skills
-  3: "5C_0X6G4ytI"  // On-Road Driving
+  1: "https://youtu.be/OfVfreyzyco",
+  2: "qZkkgkMLsvI",
+  3: "5C_0X6G4ytI"
 };
 
 // --- Module Titles ---
@@ -18,22 +17,23 @@ const titles = {
   3: "On-Road Driving"
 };
 
-// --- Display correct title on page ---
+// --- Display correct title ---
 const titleElement = document.getElementById("moduleTitle");
 if (titleElement) titleElement.innerText = titles[id] || "Training Module";
 
-// --- Hide Mark Complete button initially ---
 const completeBtn = document.getElementById("completeBtn");
 if (completeBtn) completeBtn.style.display = "none";
 
-// --- Google Sheets Logger URL ---
 const scriptURL =
   "https://script.google.com/macros/s/AKfycbzTygqxIMidgXjitFwwtn6QPxT1Vm8MJ_8zJ182oGvDBxC0_MipCOlCp4jalVmFILm9nA/exec";
 
 let player;
 let maxWatched = 0;
+let attentionTimeout = null;
+let nextAttentionCheck = null;
+let attentionActive = false;
 
-// ✅ Called when the YouTube API is ready
+// ✅ Create player
 function onYouTubeIframeAPIReady() {
   const videoId = videoLinks[id] || videoLinks[1];
   player = new YT.Player("player", {
@@ -48,38 +48,93 @@ function onYouTubeIframeAPIReady() {
   });
 }
 
-// ✅ Start tracking watch time with better smoothing
+// ✅ Start tracking playback
 function onPlayerReady() {
+  // Start anti-skip check
   setInterval(() => {
     if (!player || !player.getCurrentTime || player.getPlayerState() !== YT.PlayerState.PLAYING) return;
 
     const current = player.getCurrentTime();
     const delta = current - maxWatched;
 
-    // Only block if they clearly skip ahead more than 6 seconds and not near end
     if (delta > 6 && current < player.getDuration() - 10) {
-      console.log("⏪ Skip detected — reverting to", maxWatched.toFixed(2));
+      console.log("⏪ Skip detected, reverting to", maxWatched.toFixed(2));
       player.seekTo(maxWatched, true);
     } else if (current > maxWatched) {
-      // Normal progress
       maxWatched = current;
     }
   }, 1000);
+
+  // Start attention check loop
+  scheduleNextAttentionCheck();
 }
 
-// ✅ Detect when the video fully ends
+// ✅ Schedule a random attention check between 2–5 minutes
+function scheduleNextAttentionCheck() {
+  const interval = Math.floor(Math.random() * (300 - 120 + 1)) + 120; // seconds
+  nextAttentionCheck = setTimeout(triggerAttentionCheck, interval * 1000);
+  console.log(`🕒 Next attention check in ${interval / 60} minutes`);
+}
+
+// ✅ Trigger attention check popup
+function triggerAttentionCheck() {
+  if (!player) return;
+
+  attentionActive = true;
+  player.pauseVideo();
+
+  const overlay = document.createElement("div");
+  overlay.id = "attentionOverlay";
+  overlay.style.position = "fixed";
+  overlay.style.top = "0";
+  overlay.style.left = "0";
+  overlay.style.width = "100%";
+  overlay.style.height = "100%";
+  overlay.style.background = "rgba(0,0,0,0.8)";
+  overlay.style.display = "flex";
+  overlay.style.flexDirection = "column";
+  overlay.style.justifyContent = "center";
+  overlay.style.alignItems = "center";
+  overlay.style.zIndex = "9999";
+  overlay.style.color = "white";
+  overlay.innerHTML = `
+    <div class="bg-gray-800 p-6 rounded-lg text-center shadow-lg">
+      <h2 class="text-lg font-bold mb-4">Attention Check</h2>
+      <p class="mb-4">Please confirm you're still watching.</p>
+      <button id="continueBtn" class="bg-blue-600 px-4 py-2 rounded text-white hover:bg-blue-700">Continue</button>
+      <p class="mt-2 text-sm text-gray-400">(You have 60 seconds to respond)</p>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  // Timer — if no response in 60s, reset module
+  attentionTimeout = setTimeout(() => {
+    alert("⚠️ You did not respond in time. The module will restart.");
+    location.reload();
+  }, 60000);
+
+  document.getElementById("continueBtn").addEventListener("click", () => {
+    clearTimeout(attentionTimeout);
+    document.body.removeChild(overlay);
+    attentionActive = false;
+    player.playVideo();
+    scheduleNextAttentionCheck(); // reschedule next random check
+  });
+}
+
+// ✅ Detect when video ends
 function onPlayerStateChange(event) {
-  if (event.data === YT.PlayerState.ENDED) {
+  if (event.data === YT.PlayerState.ENDED && !attentionActive) {
+    clearTimeout(nextAttentionCheck);
     completeBtn.style.display = "inline-block";
     alert("✅ Video complete! You can now mark this module as finished.");
   }
 }
 
-// ✅ Log completion to Google Sheets
+// ✅ Log completion
 function completeModule() {
   const studentId = localStorage.getItem("studentId") || "Unknown";
   const moduleName = titles[id] || "Unknown Module";
-
   const payload = {
     studentId,
     module: moduleName,
@@ -103,6 +158,5 @@ function completeModule() {
     });
 }
 
-// --- Make functions available globally ---
 window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 window.completeModule = completeModule;
