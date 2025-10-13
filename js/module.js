@@ -1,80 +1,94 @@
-// module.js — Final version (anti-skip + working logger)
+// --- Load YouTube API dynamically ---
+let tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+let firstScriptTag = document.getElementsByTagName('script')[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-// Get the module ID from the URL (?id=1)
-const params = new URLSearchParams(window.location.search);
-const id = params.get("id");
-
-// YouTube video IDs (not full links)
-const videoLinks = {
-  1: "https://www.youtube.com/embed/5C_0X6G4ytI?feature=share",
-  2: "qZkkgkMLsvI",
-  3: "5C_0X6G4ytI"
-};
-
-// Titles for display + logging
-const titles = {
-  1: "Vehicle Inspection",
-  2: "Basic Control Skills",
-  3: "On-Road Driving"
-};
-
-// Reference the Mark Complete button and hide it initially
-const completeBtn = document.getElementById("completeBtn");
-if (completeBtn) completeBtn.style.display = "none";
-
-// ✅ Correct Google Apps Script Web App endpoint
-const scriptURL =
-  "https://script.google.com/macros/s/AKfycbzTygqxIMidgXjitFwwtn6QPxT1Vm8MJ_8zJ182oGvDBxC0_MipCOlCp4jalVmFILm9nA/exec";
-
+// --- Variables ---
 let player;
+let maxWatched = 0;
+let duration = 0;
+const modules = [
+  { title: "Module 1", videoId: "5C_0X6G4ytI" },
+  { title: "Module 2", videoId: "qZkkgkMLsvI" },
+  { title: "Module 3", videoId: "-deVMu0kyik" },
+];
 
-// --- YouTube Player Setup ---
+// Determine which module to load (default to first)
+function getModuleIndexFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const mod = params.get('module');
+  if (mod !== null) {
+    const idx = parseInt(mod, 10) - 1;
+    if (!isNaN(idx) && idx >= 0 && idx < modules.length) {
+      return idx;
+    }
+  }
+  return 0; // default
+}
+
+const moduleIndex = getModuleIndexFromURL();
+const currentModule = modules[moduleIndex];
+
+// --- Called when YouTube API is ready ---
 function onYouTubeIframeAPIReady() {
-  const videoId = videoLinks[id] || videoLinks[1];
-  player = new YT.Player("player", {
-    videoId: videoId,
+  const iframe = document.getElementById('trainingVideo');
+  
+  // Set iframe src to correct video
+  iframe.src = `https://www.youtube.com/embed/${currentModule.videoId}?enablejsapi=1&controls=1`;
+
+  player = new YT.Player('trainingVideo', {
     events: {
-      onStateChange: onPlayerStateChange
+      'onReady': onPlayerReady,
+      'onStateChange': onPlayerStateChange
     }
   });
 }
 
-// --- Detect when the video finishes ---
-function onPlayerStateChange(event) {
-  if (event.data === YT.PlayerState.ENDED) {
-    if (completeBtn) completeBtn.style.display = "inline-block";
-    alert("✅ Video complete! You can now mark this module as finished.");
+// --- When player is ready ---
+function onPlayerReady(event) {
+  duration = player.getDuration();
+  
+  // Set module title if you have an element
+  const titleEl = document.getElementById('moduleTitle');
+  if (titleEl) titleEl.textContent = currentModule.title;
+
+  const btn = document.getElementById('completeBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.add('bg-gray-400');
   }
 }
 
-// --- Send completion record to Google Sheet ---
-function completeModule() {
-  const studentId = localStorage.getItem("studentId") || "Unknown";
-  const moduleName = titles[id] || "Unknown Module";
+// --- Prevent skipping ahead + unlock complete ---
+function onPlayerStateChange(event) {
+  if (event.data === YT.PlayerState.PLAYING) {
+    const timer = setInterval(() => {
+      const current = player.getCurrentTime();
 
-  const payload = {
-    studentId,
-    module: moduleName,
-    status: "Completed",
-    score: ""
-  };
+      // Prevent jumping ahead
+      if (current - maxWatched > 2) {
+        player.seekTo(maxWatched);
+      } else {
+        maxWatched = Math.max(maxWatched, current);
+      }
 
-  fetch(scriptURL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-    mode: "no-cors"
-  })
-    .then(() => {
-      alert("✅ Module logged to training record!");
-      window.location.href = "dashboard.html";
-    })
-    .catch((err) => {
-      console.error("Logging failed:", err);
-      alert("⚠️ Something went wrong while logging progress.");
-    });
+      // Unlock “Mark Complete” when nearly done
+      if (maxWatched >= duration * 0.98) {
+        const btn = document.getElementById('completeBtn');
+        if (btn) {
+          btn.disabled = false;
+          btn.classList.remove('bg-gray-400');
+          btn.classList.add('bg-green-600', 'hover:bg-green-700');
+        }
+        clearInterval(timer);
+      }
+    }, 1000);
+  }
 }
 
-// --- Make functions global ---
-window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
-window.completeModule = completeModule;
+// --- Called when user clicks complete ---
+function completeModule() {
+  // You can expand this (e.g. send data to server or Google Sheets)
+  alert(`✅ You’ve completed: ${currentModule.title}`);
+}
