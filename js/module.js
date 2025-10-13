@@ -6,7 +6,7 @@ const id = params.get("id");
 
 // YouTube video IDs (not full links)
 const videoLinks = {
-  1: "-deVMu0kyik",
+  1: "https://www.youtube.com/embed/5C_0X6G4ytI?feature=share",
   2: "qZkkgkMLsvI",
   3: "5C_0X6G4ytI"
 };
