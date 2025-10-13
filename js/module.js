@@ -1,35 +1,55 @@
-// module.js
+// module.js - with anti-skip enabled
 
-// Get the module ID from the page URL (e.g. module.html?id=1)
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
 
 // Map module IDs to YouTube embed links
 const videoLinks = {
-  1: "https://www.youtube.com/embed/-deVMu0kyik?feature=share",
-  2: "https://www.youtube.com/embed/qZkkgkMLsvI?feature=share",
-  3: "https://www.youtube.com/embed/5C_0X6G4ytI?feature=share"
+  1: "-deVMu0kyik",
+  2: "qZkkgkMLsvI",
+  3: "5C_0X6G4ytI"
 };
 
-// Friendly titles for logging and display
+// Titles for logging and display
 const titles = {
   1: "Vehicle Inspection",
   2: "Basic Control Skills",
   3: "On-Road Driving"
 };
 
-// Set the module title and video based on the module id
-document.getElementById("moduleTitle").innerText = titles[id] || "Training Module";
-document.getElementById("videoPlayer").src = videoLinks[id] || videoLinks[1];
+// Hide the "Mark Complete" button initially
+const completeBtn = document.querySelector(".btn");
+completeBtn.style.display = "none";
 
-// Your Google Apps Script Web App URL for logging
-const scriptURL = "https://script.google.com/macros/s/AKfycbz4fAjnjqfybEBRVnFhQcnAnlOfyRUlYP5f34yZMUjaaSsBwRzPmaK6tfWFsB4kha-6/exec";
+// Create YouTube player when API is ready
+let player;
+function onYouTubeIframeAPIReady() {
+  const videoId = videoLinks[id] || videoLinks[1];
+  player = new YT.Player("player", {
+    videoId: videoId,
+    events: {
+      onStateChange: onPlayerStateChange
+    }
+  });
+}
 
-// Function to call when the student marks a module complete
+// Detect when video ends
+function onPlayerStateChange(event) {
+  if (event.data === YT.PlayerState.ENDED) {
+    completeBtn.style.display = "block";
+    alert("Video complete! You can now mark this module as finished.");
+  }
+}
+
+// Your Google Apps Script Web App URL
+const scriptURL =
+  "https://script.google.com/macros/s/AKfycbz4fAjnjqfybEBRVnFhQcnAnlOfyRUlYP5f34yZMUjaaSsBwRzPmaK6tfWFsB4kha-6/exec";
+
+// Log completion to Google Sheets
 function completeModule() {
   const studentId = localStorage.getItem("studentId") || "Unknown";
   const moduleName = titles[id] || "Unknown Module";
-  
+
   const payload = {
     studentId: studentId,
     module: moduleName,
@@ -37,13 +57,10 @@ function completeModule() {
     score: ""
   };
 
-  // Send data to your Google Sheet
   fetch(scriptURL, {
     method: "POST",
     mode: "no-cors",
-    headers: {
-      "Content-Type": "application/json"
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
 
@@ -51,5 +68,5 @@ function completeModule() {
   window.location.href = "dashboard.html";
 }
 
-// Make the function globally accessible so your button can call it
 window.completeModule = completeModule;
+window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
