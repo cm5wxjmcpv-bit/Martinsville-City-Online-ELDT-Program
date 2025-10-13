@@ -6,7 +6,7 @@ const id = params.get("id");
 
 // --- YouTube Video IDs ---
 const videoLinks = {
-  1: "-deVMu0kyik", // Vehicle Inspection
+  1: "https://youtu.be/OfVfreyzyco", // Vehicle Inspection
   2: "qZkkgkMLsvI", // Basic Control Skills
   3: "5C_0X6G4ytI"  // On-Road Driving
 };
