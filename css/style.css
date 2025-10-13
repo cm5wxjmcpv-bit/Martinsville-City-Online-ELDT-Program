@@ -1,14 +1,12 @@
 body {
   background: url("../assets/background.png") no-repeat center center fixed;
-  background-size: contain; /* or use cover for full bleed */
-  background-color: #f8f8f8; /* light gray behind image */
+  background-size: cover;
+  background-color: #f8f8f8;
   background-blend-mode: multiply;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   margin: 0;
   padding: 0;
   min-height: 100vh;
-}
-
 }
 .card {
   background-color: rgba(255, 255, 255, 0.92);
