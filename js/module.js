@@ -8,10 +8,13 @@ const titles = {
 };
 
 document.getElementById("moduleTitle").innerText = titles[id] || "Training Module";
+const videoLinks = {
+  1: "https://www.youtube.com/embed/REPLACE_THIS_WITH_VIDEO_1",
+  2: "https://www.youtube.com/embed/REPLACE_THIS_WITH_VIDEO_2",
+  3: "https://www.youtube.com/embed/REPLACE_THIS_WITH_VIDEO_3"
+};
 
-// Replace with your real YouTube video links if desired
-const placeholder = "https://www.youtube.com/embed/dQw4w9WgXcQ";
-document.getElementById("videoPlayer").src = placeholder;
+document.getElementById("videoPlayer").src = videoLinks[id] || videoLinks[1];
 
 // 🔗 Replace with your own Apps Script Web App URL
 const scriptURL = "https://script.google.com/macros/s/AKfycbzTygqxIMidgXjitFwwtn6QPxT1Vm8MJ_8zJ182oGvDBxC0_MipCOlCp4jalVmFILm9nA/exec";
