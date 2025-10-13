@@ -1,26 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Module - Martinsville CDL / ELDT</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="css/style.css" />
-  <link rel="icon" type="image/png" href="assets/background.png">
-</head>
-<body class="min-h-screen p-4">
-  <div class="card max-w-3xl mx-auto text-center">
-    <div class="flex items-center justify-between mb-4">
-      <h1 id="moduleTitle" class="text-xl font-bold">Training Module</h1>
-      <a href="dashboard.html" class="text-sm underline text-gray-700">Back to Dashboard</a>
-    </div>
-    <div class="w-full">
-      <div class="relative w-full" style="padding-top: 56.25%;">
-        <iframe id="videoPlayer" class="absolute top-0 left-0 w-full h-full rounded-lg" src="" frameborder="0" allowfullscreen></iframe>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Martinsville CDL / ELDT Training Module</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="icon" type="image/png" href="assets/background.png" />
+  </head>
+
+  <body class="min-h-screen bg-gray-50 p-4">
+    <div class="card max-w-3xl mx-auto text-center">
+      <h1 id="moduleTitle" class="text-xl font-bold mb-4">
+        Training Module
+      </h1>
+
+      <!-- ✅ YouTube Player Container (replaces old iframe) -->
+      <div class="relative w-full" style="padding-top: 56.25%">
+        <div
+          id="player"
+          class="absolute top-0 left-0 w-full h-full rounded-lg"
+        ></div>
       </div>
+
+      <!-- ✅ Hidden Mark Complete Button -->
+      <button
+        id="completeBtn"
+        onclick="completeModule()"
+        class="btn mt-4 bg-blue-600 text-white px-4 py-2 rounded"
+        style="display: none"
+      >
+        Mark Complete
+      </button>
     </div>
-    <button onclick="completeModule()" class="btn mt-4">Mark Complete</button>
-  </div>
-  <script src="js/module.js"></script>
-</body>
+
+    <!-- ✅ Load the YouTube API FIRST -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+
+    <!-- ✅ Then load your module logic -->
+    <script src="js/module.js"></script>
+  </body>
 </html>
