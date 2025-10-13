@@ -15,7 +15,6 @@ const videoLinks = {
 };
 
 document.getElementById("videoPlayer").src = videoLinks[id] || videoLinks[1];
-
 // 🔗 Replace with your own Apps Script Web App URL
 const scriptURL = "https://script.google.com/macros/s/AKfycbzTygqxIMidgXjitFwwtn6QPxT1Vm8MJ_8zJ182oGvDBxC0_MipCOlCp4jalVmFILm9nA/exec";
 
