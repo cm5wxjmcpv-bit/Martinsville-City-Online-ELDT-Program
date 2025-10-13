@@ -13,12 +13,19 @@
 
   <body class="min-h-screen bg-gray-50 p-4">
     <div class="card max-w-3xl mx-auto text-center">
-      <h1 id="moduleTitle" class="text-xl font-bold mb-4">
-        Training Module
-      </h1>
+      <div class="flex items-center justify-between mb-4">
+        <h1 id="moduleTitle" class="text-xl font-bold">
+          Training Module
+        </h1>
+        <a
+          href="dashboard.html"
+          class="text-sm underline text-gray-700 hover:text-blue-600"
+          >Back to Dashboard</a
+        >
+      </div>
 
-      <!-- ✅ YouTube Player Container (replaces old iframe) -->
-      <div class="relative w-full" style="padding-top: 56.25%">
+      <!-- ✅ YouTube Player Container (API inserts video here) -->
+      <div class="relative w-full" style="padding-top: 56.25%;">
         <div
           id="player"
           class="absolute top-0 left-0 w-full h-full rounded-lg"
@@ -30,13 +37,13 @@
         id="completeBtn"
         onclick="completeModule()"
         class="btn mt-4 bg-blue-600 text-white px-4 py-2 rounded"
-        style="display: none"
+        style="display: none;"
       >
         Mark Complete
       </button>
     </div>
 
-    <!-- ✅ Load the YouTube API FIRST -->
+    <!-- ✅ Load YouTube API FIRST -->
     <script src="https://www.youtube.com/iframe_api"></script>
 
     <!-- ✅ Then load your module logic -->
