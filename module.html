@@ -1,83 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Training Module - Martinsville CDL / ELDT</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="min-h-screen p-4 bg-gray-50">
-  <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-lg p-6">
-    <h1 id="moduleTitle" class="text-xl font-bold mb-4 text-center">
-      Training Module
-    </h1>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Martinsville CDL / ELDT Training Module</title>
 
-    <!-- YouTube video -->
-    <div class="aspect-w-16 aspect-h-9 mb-6">
-      <iframe id="trainingVideo" class="w-full h-96 rounded-lg"
-        src="https://www.youtube.com/embed/5C_0X6G4ytI?feature=share"
-        frameborder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowfullscreen>
-      </iframe>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="icon" type="image/png" href="assets/background.png" />
+  </head>
+
+  <body class="min-h-screen bg-gray-50 p-4">
+    <div class="card max-w-3xl mx-auto text-center">
+      <div class="flex items-center justify-between mb-4">
+        <h1 id="moduleTitle" class="text-xl font-bold">
+          Training Module
+        </h1>
+        <a
+          href="dashboard.html"
+          class="text-sm underline text-gray-700 hover:text-blue-600"
+          >Back to Dashboard</a
+        >
+      </div>
+
+      <!-- ✅ YouTube Player Container (API inserts video here) -->
+      <div class="relative w-full" style="padding-top: 56.25%;">
+        <div
+          id="player"
+          class="absolute top-0 left-0 w-full h-full rounded-lg"
+        ></div>
+      </div>
+
+      <!-- ✅ Hidden Mark Complete Button -->
+      <button
+        id="completeBtn"
+        onclick="completeModule()"
+        class="btn mt-4 bg-blue-600 text-white px-4 py-2 rounded"
+        style="display: none;"
+      >
+        Mark Complete
+      </button>
     </div>
 
-    <!-- Complete button -->
-    <button id="completeBtn" disabled
-      class="btn bg-gray-400 text-white py-2 px-4 rounded-lg w-full">
-      Mark Complete
-    </button>
-  </div>
+    <!-- ✅ Load YouTube API FIRST -->
+    <script src="https://www.youtube.com/iframe_api"></script>
 
-  <!-- Load YouTube API -->
-  <script src="https://www.youtube.com/iframe_api"></script>
-
-  <script>
-    let player;
-    let maxWatched = 0;
-    let duration = 0;
-    const completeBtn = document.getElementById('completeBtn');
-
-    // Called when the YouTube API is ready
-    function onYouTubeIframeAPIReady() {
-      player = new YT.Player('trainingVideo', {
-        events: {
-          'onReady': onPlayerReady,
-          'onStateChange': onPlayerStateChange
-        }
-      });
-    }
-
-    function onPlayerReady(event) {
-      duration = player.getDuration();
-    }
-
-    function onPlayerStateChange(event) {
-      if (event.data === YT.PlayerState.PLAYING) {
-        setInterval(() => {
-          const current = player.getCurrentTime();
-
-          // Prevent skipping forward
-          if (current - maxWatched > 2) {
-            player.seekTo(maxWatched);
-          } else {
-            maxWatched = Math.max(maxWatched, current);
-          }
-
-          // Unlock button when 98% of video watched
-          if (maxWatched >= duration * 0.98) {
-            completeBtn.disabled = false;
-            completeBtn.classList.remove('bg-gray-400');
-            completeBtn.classList.add('bg-green-600', 'hover:bg-green-700');
-          }
-        }, 1000);
-      }
-    }
-
-    completeBtn.addEventListener('click', () => {
-      alert("✅ Module marked complete!");
-      // You can add code here to record completion in Google or your database
-    });
-  </script>
-</body>
+    <!-- ✅ Then load your module logic -->
+    <script src="js/module.js"></script>
+  </body>
 </html>
