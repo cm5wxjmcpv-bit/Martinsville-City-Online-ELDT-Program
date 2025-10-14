@@ -1,13 +1,14 @@
-// module.js — Anti-skip + Attention Checker + Logging
+// module.js — Anti-skip + Attention Checker + Logging (Stable 2025-10-13)
 
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
 
-// --- Video List ---
+// --- YouTube Video IDs ---
+// ✅ Use only the ID part (the characters after "v=" or after the last "/")
 const videoLinks = {
-  1: "https://youtu.be/z5riddRK2fY",
-  2: "https://youtu.be/z5riddRK2fY",
-  3: "https://youtu.be/z5riddRK2fY"
+  1: "z5riddRK2fY", // Vehicle Inspection
+  2: "z5riddRK2fY", // Basic Control Skills
+  3: "z5riddRK2fY"  // On-Road Driving
 };
 
 // --- Module Titles ---
@@ -21,9 +22,11 @@ const titles = {
 const titleElement = document.getElementById("moduleTitle");
 if (titleElement) titleElement.innerText = titles[id] || "Training Module";
 
+// --- Hide 'Mark Complete' initially ---
 const completeBtn = document.getElementById("completeBtn");
 if (completeBtn) completeBtn.style.display = "none";
 
+// --- Google Sheets logging endpoint ---
 const scriptURL =
   "https://script.google.com/macros/s/AKfycbzTygqxIMidgXjitFwwtn6QPxT1Vm8MJ_8zJ182oGvDBxC0_MipCOlCp4jalVmFILm9nA/exec";
 
@@ -33,7 +36,7 @@ let attentionTimeout = null;
 let nextAttentionCheck = null;
 let attentionActive = false;
 
-// ✅ Create player
+// ✅ Create YouTube player
 function onYouTubeIframeAPIReady() {
   const videoId = videoLinks[id] || videoLinks[1];
   player = new YT.Player("player", {
@@ -48,35 +51,36 @@ function onYouTubeIframeAPIReady() {
   });
 }
 
-// ✅ Start tracking playback
+// ✅ Track watch progress + anti-skip
 function onPlayerReady() {
-  // Start anti-skip check
+  // Anti-skip every second
   setInterval(() => {
     if (!player || !player.getCurrentTime || player.getPlayerState() !== YT.PlayerState.PLAYING) return;
 
     const current = player.getCurrentTime();
     const delta = current - maxWatched;
 
+    // Only block large jumps (skip ahead > 6s)
     if (delta > 6 && current < player.getDuration() - 10) {
-      console.log("⏪ Skip detected, reverting to", maxWatched.toFixed(2));
+      console.log("⏪ Skip detected — returning to", maxWatched.toFixed(2));
       player.seekTo(maxWatched, true);
     } else if (current > maxWatched) {
       maxWatched = current;
     }
   }, 1000);
 
-  // Start attention check loop
+  // Start attention checker
   scheduleNextAttentionCheck();
 }
 
-// ✅ Schedule a random attention check between 2–5 minutes
+// ✅ Random attention check every 2–5 minutes
 function scheduleNextAttentionCheck() {
   const interval = Math.floor(Math.random() * (300 - 120 + 1)) + 120; // seconds
   nextAttentionCheck = setTimeout(triggerAttentionCheck, interval * 1000);
-  console.log(`🕒 Next attention check in ${interval / 60} minutes`);
+  console.log(`🕒 Next attention check in ${(interval / 60).toFixed(1)} minutes`);
 }
 
-// ✅ Trigger attention check popup
+// ✅ Pause + prompt for attention confirmation
 function triggerAttentionCheck() {
   if (!player) return;
 
@@ -98,16 +102,18 @@ function triggerAttentionCheck() {
   overlay.style.zIndex = "9999";
   overlay.style.color = "white";
   overlay.innerHTML = `
-    <div class="bg-gray-800 p-6 rounded-lg text-center shadow-lg">
+    <div class="bg-gray-800 p-6 rounded-lg text-center shadow-lg max-w-sm">
       <h2 class="text-lg font-bold mb-4">Attention Check</h2>
       <p class="mb-4">Please confirm you're still watching.</p>
-      <button id="continueBtn" class="bg-blue-600 px-4 py-2 rounded text-white hover:bg-blue-700">Continue</button>
+      <button id="continueBtn" class="bg-blue-600 px-4 py-2 rounded text-white hover:bg-blue-700">
+        Continue
+      </button>
       <p class="mt-2 text-sm text-gray-400">(You have 60 seconds to respond)</p>
     </div>
   `;
   document.body.appendChild(overlay);
 
-  // Timer — if no response in 60s, reset module
+  // Timer — if no response in 60s, reset page
   attentionTimeout = setTimeout(() => {
     alert("⚠️ You did not respond in time. The module will restart.");
     location.reload();
@@ -118,11 +124,11 @@ function triggerAttentionCheck() {
     document.body.removeChild(overlay);
     attentionActive = false;
     player.playVideo();
-    scheduleNextAttentionCheck(); // reschedule next random check
+    scheduleNextAttentionCheck(); // schedule next one
   });
 }
 
-// ✅ Detect when video ends
+// ✅ Detect when the video ends
 function onPlayerStateChange(event) {
   if (event.data === YT.PlayerState.ENDED && !attentionActive) {
     clearTimeout(nextAttentionCheck);
@@ -131,7 +137,7 @@ function onPlayerStateChange(event) {
   }
 }
 
-// ✅ Log completion
+// ✅ Log completion to Google Sheets
 function completeModule() {
   const studentId = localStorage.getItem("studentId") || "Unknown";
   const moduleName = titles[id] || "Unknown Module";
@@ -158,5 +164,6 @@ function completeModule() {
     });
 }
 
+// --- Make functions global ---
 window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 window.completeModule = completeModule;
