@@ -5,14 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Martinsville CDL / ELDT Training Module</title>
 
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/style.css" />
+    <link rel="icon" type="image/png" href="assets/background.png" />
   </head>
 
   <body class="min-h-screen bg-gray-50 p-4">
     <div class="card max-w-3xl mx-auto text-center">
       <div class="flex items-center justify-between mb-4">
-        <h1 id="moduleTitle" class="text-xl font-bold">Training Module</h1>
+        <h1 id="moduleTitle" class="text-xl font-bold">
+          Training Module
+        </h1>
         <a
           href="dashboard.html"
           class="text-sm underline text-gray-700 hover:text-blue-600"
@@ -20,7 +24,7 @@
         >
       </div>
 
-      <!-- ✅ YouTube player container -->
+      <!-- ✅ Player container — DO NOT use <iframe> -->
       <div class="relative w-full" style="padding-top: 56.25%;">
         <div
           id="player"
@@ -39,8 +43,8 @@
       </button>
     </div>
 
-    <!-- ✅ Load YouTube API then your script -->
+    <!-- ✅ YouTube API must load BEFORE module.js -->
     <script src="https://www.youtube.com/iframe_api"></script>
-    <script src="js/module.js"></script>
+    <script src="js/module.js?v=5"></script>
   </body>
 </html>
