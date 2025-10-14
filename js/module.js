@@ -1,4 +1,5 @@
-// module.js — Polished version with end fade + strict skip prevention
+// module.js — Stable 2025-10-13 version
+// Anti-skip, attention checker, fade-to-black, and proper end handling
 
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
@@ -55,7 +56,7 @@ function onYouTubeIframeAPIReady() {
   });
 }
 
-// ✅ Track playback & anti-skip
+// ✅ Track playback & anti-skip with smarter end handling
 function onPlayerReady() {
   setInterval(() => {
     if (!player || !player.getCurrentTime || player.getPlayerState() !== YT.PlayerState.PLAYING) return;
@@ -64,19 +65,20 @@ function onPlayerReady() {
     const duration = player.getDuration();
     const delta = current - maxWatched;
 
-    // Anti-skip: stop jumps >6s or if user tries to move near the very end (last 5%)
-    if (delta > 6 || current > duration * 0.95) {
-      console.log("⏪ Skip detected — returning to", maxWatched.toFixed(2));
+    // --- normal progress ---
+    if (current > maxWatched) maxWatched = current;
+
+    // --- only block if they jump way ahead AND not inside last 8s ---
+    const nearEnd = duration - current < 8; // 8s safe zone at end
+    const jumped = delta > 6 && !nearEnd;
+
+    if (jumped || (current > maxWatched + 6 && !nearEnd)) {
+      console.log("⏪ Skip detected — reverting to", maxWatched.toFixed(2));
       player.seekTo(maxWatched, true);
       return;
     }
 
-    // Normal progress
-    if (current > maxWatched) {
-      maxWatched = current;
-    }
-
-    // ✅ Fade to black 3 seconds before end to hide YouTube suggestions
+    // --- fade to black 3 seconds before end to hide suggestions ---
     if (!fadedOut && duration - current <= 3) {
       fadedOut = true;
       fadeOutVideo();
@@ -141,7 +143,7 @@ function triggerAttentionCheck() {
   });
 }
 
-// ✅ Fade video to black near end
+// ✅ Fade to black near end to block YouTube suggestions
 function fadeOutVideo() {
   const playerDiv = document.getElementById("player");
   const fadeOverlay = document.createElement("div");
@@ -157,11 +159,11 @@ function fadeOutVideo() {
   playerDiv.appendChild(fadeOverlay);
 
   setTimeout(() => {
-    fadeOverlay.style.opacity = "1"; // fade to black
+    fadeOverlay.style.opacity = "1"; // smooth fade
   }, 500);
 }
 
-// ✅ When video finishes
+// ✅ When video ends naturally
 function onPlayerStateChange(event) {
   if (event.data === YT.PlayerState.ENDED && !attentionActive) {
     clearTimeout(nextAttentionCheck);
@@ -170,7 +172,7 @@ function onPlayerStateChange(event) {
   }
 }
 
-// ✅ Log to Google Sheets
+// ✅ Log completion to Google Sheets
 function completeModule() {
   const studentId = localStorage.getItem("studentId") || "Unknown";
   const moduleName = titles[id] || "Unknown Module";
