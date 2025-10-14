@@ -1,14 +1,13 @@
-// module.js — Anti-skip + Attention Checker + Logging (Stable 2025-10-13)
+// module.js — Polished version with end fade + strict skip prevention
 
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
 
 // --- YouTube Video IDs ---
-// ✅ Use only the ID part (the characters after "v=" or after the last "/")
 const videoLinks = {
-  1: "z5riddRK2fY", // Vehicle Inspection
-  2: "z5riddRK2fY", // Basic Control Skills
-  3: "z5riddRK2fY"  // On-Road Driving
+  1: "z5riddRK2fY",
+  2: "z5riddRK2fY",
+  3: "z5riddRK2fY"
 };
 
 // --- Module Titles ---
@@ -35,6 +34,7 @@ let maxWatched = 0;
 let attentionTimeout = null;
 let nextAttentionCheck = null;
 let attentionActive = false;
+let fadedOut = false;
 
 // ✅ Create YouTube player
 function onYouTubeIframeAPIReady() {
@@ -43,7 +43,11 @@ function onYouTubeIframeAPIReady() {
     height: "360",
     width: "640",
     videoId: videoId,
-    playerVars: { controls: 1, disablekb: 0 },
+    playerVars: {
+      controls: 1,
+      disablekb: 0,
+      rel: 0 // hides related videos
+    },
     events: {
       onReady: onPlayerReady,
       onStateChange: onPlayerStateChange
@@ -51,36 +55,45 @@ function onYouTubeIframeAPIReady() {
   });
 }
 
-// ✅ Track watch progress + anti-skip
+// ✅ Track playback & anti-skip
 function onPlayerReady() {
-  // Anti-skip every second
   setInterval(() => {
     if (!player || !player.getCurrentTime || player.getPlayerState() !== YT.PlayerState.PLAYING) return;
 
     const current = player.getCurrentTime();
+    const duration = player.getDuration();
     const delta = current - maxWatched;
 
-    // Only block large jumps (skip ahead > 6s)
-    if (delta > 6 && current < player.getDuration() - 10) {
+    // Anti-skip: stop jumps >6s or if user tries to move near the very end (last 5%)
+    if (delta > 6 || current > duration * 0.95) {
       console.log("⏪ Skip detected — returning to", maxWatched.toFixed(2));
       player.seekTo(maxWatched, true);
-    } else if (current > maxWatched) {
+      return;
+    }
+
+    // Normal progress
+    if (current > maxWatched) {
       maxWatched = current;
+    }
+
+    // ✅ Fade to black 3 seconds before end to hide YouTube suggestions
+    if (!fadedOut && duration - current <= 3) {
+      fadedOut = true;
+      fadeOutVideo();
     }
   }, 1000);
 
-  // Start attention checker
   scheduleNextAttentionCheck();
 }
 
 // ✅ Random attention check every 2–5 minutes
 function scheduleNextAttentionCheck() {
-  const interval = Math.floor(Math.random() * (300 - 120 + 1)) + 120; // seconds
+  const interval = Math.floor(Math.random() * (300 - 120 + 1)) + 120;
   nextAttentionCheck = setTimeout(triggerAttentionCheck, interval * 1000);
   console.log(`🕒 Next attention check in ${(interval / 60).toFixed(1)} minutes`);
 }
 
-// ✅ Pause + prompt for attention confirmation
+// ✅ Pause + confirm popup
 function triggerAttentionCheck() {
   if (!player) return;
 
@@ -113,7 +126,7 @@ function triggerAttentionCheck() {
   `;
   document.body.appendChild(overlay);
 
-  // Timer — if no response in 60s, reset page
+  // Timeout to restart if no response
   attentionTimeout = setTimeout(() => {
     alert("⚠️ You did not respond in time. The module will restart.");
     location.reload();
@@ -124,11 +137,31 @@ function triggerAttentionCheck() {
     document.body.removeChild(overlay);
     attentionActive = false;
     player.playVideo();
-    scheduleNextAttentionCheck(); // schedule next one
+    scheduleNextAttentionCheck();
   });
 }
 
-// ✅ Detect when the video ends
+// ✅ Fade video to black near end
+function fadeOutVideo() {
+  const playerDiv = document.getElementById("player");
+  const fadeOverlay = document.createElement("div");
+  fadeOverlay.style.position = "absolute";
+  fadeOverlay.style.top = "0";
+  fadeOverlay.style.left = "0";
+  fadeOverlay.style.width = "100%";
+  fadeOverlay.style.height = "100%";
+  fadeOverlay.style.background = "black";
+  fadeOverlay.style.opacity = "0";
+  fadeOverlay.style.transition = "opacity 1.5s ease";
+  fadeOverlay.style.zIndex = "999";
+  playerDiv.appendChild(fadeOverlay);
+
+  setTimeout(() => {
+    fadeOverlay.style.opacity = "1"; // fade to black
+  }, 500);
+}
+
+// ✅ When video finishes
 function onPlayerStateChange(event) {
   if (event.data === YT.PlayerState.ENDED && !attentionActive) {
     clearTimeout(nextAttentionCheck);
@@ -137,16 +170,11 @@ function onPlayerStateChange(event) {
   }
 }
 
-// ✅ Log completion to Google Sheets
+// ✅ Log to Google Sheets
 function completeModule() {
   const studentId = localStorage.getItem("studentId") || "Unknown";
   const moduleName = titles[id] || "Unknown Module";
-  const payload = {
-    studentId,
-    module: moduleName,
-    status: "Completed",
-    score: ""
-  };
+  const payload = { studentId, module: moduleName, status: "Completed", score: "" };
 
   fetch(scriptURL, {
     method: "POST",
