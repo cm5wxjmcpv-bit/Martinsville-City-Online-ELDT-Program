@@ -7,7 +7,7 @@ const id = params.get("id");
 const videoLinks = {
   1: "https://youtu.be/z5riddRK2fY",
   2: "https://youtu.be/z5riddRK2fY",
-  3: "5C_0X6G4ytI"
+  3: "https://youtu.be/z5riddRK2fY"
 };
 
 // --- Module Titles ---
