@@ -1,5 +1,5 @@
-// module.js — Stable 2025-10-13 version
-// Anti-skip, attention checker, fade-to-black, and proper end handling
+// module.js — 2025-10-13 final build
+// strict end-protection + fade-to-black + attention checker + logging
 
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
@@ -18,15 +18,15 @@ const titles = {
   3: "On-Road Driving"
 };
 
-// --- Display correct title ---
+// --- Display title ---
 const titleElement = document.getElementById("moduleTitle");
 if (titleElement) titleElement.innerText = titles[id] || "Training Module";
 
-// --- Hide 'Mark Complete' initially ---
+// --- Hide button initially ---
 const completeBtn = document.getElementById("completeBtn");
 if (completeBtn) completeBtn.style.display = "none";
 
-// --- Google Sheets logging endpoint ---
+// --- Google Sheets endpoint ---
 const scriptURL =
   "https://script.google.com/macros/s/AKfycbzTygqxIMidgXjitFwwtn6QPxT1Vm8MJ_8zJ182oGvDBxC0_MipCOlCp4jalVmFILm9nA/exec";
 
@@ -37,7 +37,7 @@ let nextAttentionCheck = null;
 let attentionActive = false;
 let fadedOut = false;
 
-// ✅ Create YouTube player
+// ✅ create YouTube player
 function onYouTubeIframeAPIReady() {
   const videoId = videoLinks[id] || videoLinks[1];
   player = new YT.Player("player", {
@@ -47,16 +47,13 @@ function onYouTubeIframeAPIReady() {
     playerVars: {
       controls: 1,
       disablekb: 0,
-      rel: 0 // hides related videos
+      rel: 0
     },
-    events: {
-      onReady: onPlayerReady,
-      onStateChange: onPlayerStateChange
-    }
+    events: { onReady: onPlayerReady, onStateChange: onPlayerStateChange }
   });
 }
 
-// ✅ Track playback & anti-skip with smarter end handling
+// ✅ playback tracking + strict anti-skip
 function onPlayerReady() {
   setInterval(() => {
     if (!player || !player.getCurrentTime || player.getPlayerState() !== YT.PlayerState.PLAYING) return;
@@ -65,20 +62,22 @@ function onPlayerReady() {
     const duration = player.getDuration();
     const delta = current - maxWatched;
 
-    // --- normal progress ---
+    // record progress
     if (current > maxWatched) maxWatched = current;
 
-    // --- only block if they jump way ahead AND not inside last 8s ---
-    const nearEnd = duration - current < 8; // 8s safe zone at end
-    const jumped = delta > 6 && !nearEnd;
+    // --- strict skip protection ---
+    const nearEnd = duration - current < 5;        // last 5 s
+    const watchedEnough = maxWatched > duration - 5;
+    const jumped = delta > 6 || current > maxWatched + 6;
 
-    if (jumped || (current > maxWatched + 6 && !nearEnd)) {
-      console.log("⏪ Skip detected — reverting to", maxWatched.toFixed(2));
+    // block jump into un-watched zone or end
+    if ((jumped && !watchedEnough) || (current >= duration - 2 && !watchedEnough)) {
+      console.log("⏪ Skip detected → reverting to", maxWatched.toFixed(2));
       player.seekTo(maxWatched, true);
       return;
     }
 
-    // --- fade to black 3 seconds before end to hide suggestions ---
+    // --- fade-to-black 3 s before end ---
     if (!fadedOut && duration - current <= 3) {
       fadedOut = true;
       fadeOutVideo();
@@ -88,34 +87,28 @@ function onPlayerReady() {
   scheduleNextAttentionCheck();
 }
 
-// ✅ Random attention check every 2–5 minutes
+// ✅ random attention check
 function scheduleNextAttentionCheck() {
   const interval = Math.floor(Math.random() * (300 - 120 + 1)) + 120;
   nextAttentionCheck = setTimeout(triggerAttentionCheck, interval * 1000);
   console.log(`🕒 Next attention check in ${(interval / 60).toFixed(1)} minutes`);
 }
 
-// ✅ Pause + confirm popup
+// ✅ pause + popup
 function triggerAttentionCheck() {
   if (!player) return;
-
   attentionActive = true;
   player.pauseVideo();
 
   const overlay = document.createElement("div");
   overlay.id = "attentionOverlay";
-  overlay.style.position = "fixed";
-  overlay.style.top = "0";
-  overlay.style.left = "0";
-  overlay.style.width = "100%";
-  overlay.style.height = "100%";
-  overlay.style.background = "rgba(0,0,0,0.8)";
-  overlay.style.display = "flex";
-  overlay.style.flexDirection = "column";
-  overlay.style.justifyContent = "center";
-  overlay.style.alignItems = "center";
-  overlay.style.zIndex = "9999";
-  overlay.style.color = "white";
+  Object.assign(overlay.style, {
+    position: "fixed",
+    top: "0", left: "0", width: "100%", height: "100%",
+    background: "rgba(0,0,0,0.8)", display: "flex",
+    flexDirection: "column", justifyContent: "center",
+    alignItems: "center", zIndex: "9999", color: "white"
+  });
   overlay.innerHTML = `
     <div class="bg-gray-800 p-6 rounded-lg text-center shadow-lg max-w-sm">
       <h2 class="text-lg font-bold mb-4">Attention Check</h2>
@@ -124,13 +117,11 @@ function triggerAttentionCheck() {
         Continue
       </button>
       <p class="mt-2 text-sm text-gray-400">(You have 60 seconds to respond)</p>
-    </div>
-  `;
+    </div>`;
   document.body.appendChild(overlay);
 
-  // Timeout to restart if no response
   attentionTimeout = setTimeout(() => {
-    alert("⚠️ You did not respond in time. The module will restart.");
+    alert("⚠️ No response. Restarting module.");
     location.reload();
   }, 60000);
 
@@ -143,27 +134,24 @@ function triggerAttentionCheck() {
   });
 }
 
-// ✅ Fade to black near end to block YouTube suggestions
+// ✅ fade-to-black layer
 function fadeOutVideo() {
   const playerDiv = document.getElementById("player");
   const fadeOverlay = document.createElement("div");
-  fadeOverlay.style.position = "absolute";
-  fadeOverlay.style.top = "0";
-  fadeOverlay.style.left = "0";
-  fadeOverlay.style.width = "100%";
-  fadeOverlay.style.height = "100%";
-  fadeOverlay.style.background = "black";
-  fadeOverlay.style.opacity = "0";
-  fadeOverlay.style.transition = "opacity 1.5s ease";
-  fadeOverlay.style.zIndex = "999";
+  Object.assign(fadeOverlay.style, {
+    position: "absolute",
+    top: "0", left: "0",
+    width: "100%", height: "100%",
+    background: "black",
+    opacity: "0",
+    transition: "opacity 1.5s ease",
+    zIndex: "999"
+  });
   playerDiv.appendChild(fadeOverlay);
-
-  setTimeout(() => {
-    fadeOverlay.style.opacity = "1"; // smooth fade
-  }, 500);
+  setTimeout(() => { fadeOverlay.style.opacity = "1"; }, 200);
 }
 
-// ✅ When video ends naturally
+// ✅ when video truly ends
 function onPlayerStateChange(event) {
   if (event.data === YT.PlayerState.ENDED && !attentionActive) {
     clearTimeout(nextAttentionCheck);
@@ -172,7 +160,7 @@ function onPlayerStateChange(event) {
   }
 }
 
-// ✅ Log completion to Google Sheets
+// ✅ log completion
 function completeModule() {
   const studentId = localStorage.getItem("studentId") || "Unknown";
   const moduleName = titles[id] || "Unknown Module";
@@ -194,6 +182,5 @@ function completeModule() {
     });
 }
 
-// --- Make functions global ---
 window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 window.completeModule = completeModule;
