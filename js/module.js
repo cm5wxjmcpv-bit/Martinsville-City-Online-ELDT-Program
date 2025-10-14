@@ -6,7 +6,7 @@ const id = params.get("id");
 // --- Video List ---
 const videoLinks = {
   1: "https://youtu.be/z5riddRK2fY",
-  2: "qZkkgkMLsvI",
+  2: "https://youtu.be/z5riddRK2fY",
   3: "5C_0X6G4ytI"
 };
 
