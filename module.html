@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Module • Martinsville CDL Program</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="background.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <img src="background.png" alt="Logo" class="logo">
+    <div>
+      <h1 id="moduleTitle">Module</h1>
+      <div class="subhead"><span id="studentLabel"></span></div>
+    </div>
+    <nav class="nav-right">
+      <a class="btn btn-ghost" href="dashboard.html">Back to Dashboard</a>
+    </nav>
+  </header>
+  <main class="container">
+    <section class="card">
+      <div id="playerWrap">
+        <div id="player"></div>
+        <div id="fadeOverlay" class="fade-overlay" aria-hidden="true"></div>
+      </div>
+      <div class="controls">
+        <button id="markComplete" class="btn" disabled>Mark Complete</button>
+        <span id="status" class="muted">Watch to the end to enable.</span>
+      </div>
+    </section>
+    <section class="card">
+      <h3>Having trouble?</h3>
+      <ol>
+        <li>Make sure this page URL looks like: <code>module.html?id=YOUTUBE_ID</code></li>
+        <li>Try refreshing the page.</li>
+        <li>If an ad shows at the end, the screen will fade to hide suggestions.</li>
+      </ol>
+    </section>
+  </main>
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="module.js"></script>
+</body>
+</html>
