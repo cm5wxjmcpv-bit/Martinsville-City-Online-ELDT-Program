@@ -7,7 +7,7 @@
 const params = new URLSearchParams(window.location.search);
 const moduleId = params.get("id") || "Unknown Module";
 const student = localStorage.getItem("studentName") || "Unknown Student";
-const scriptURL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE"; // <-- Replace with your deployed Apps Script URL
+const scriptURL = "https://script.google.com/macros/s/AKfycbzT_DwYALs_PRoAQmAdk2z2bKXP9NY3l9_3vYodDODGagEE7l5ISEy9zRmQfGtCLkRrjQ/exec"; // <-- Replace with your deployed Apps Script URL
 
 let player;
 let videoDuration = 0;
