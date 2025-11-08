@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Martinsville CDL / ELDT Training Module</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/style.css?v=4" />
+    <link rel="stylesheet" href="css/style.css?v=5" />
     <link rel="icon" type="image/png" href="assets/background.png" />
   </head>
   <body class="min-h-screen bg-gray-50 p-4">
@@ -15,16 +15,23 @@
         <a href="dashboard.html" class="text-sm underline text-gray-700 hover:text-blue-600">Back</a>
       </div>
 
-      <!-- Player wrapper with non-clickable shield -->
+      <!-- Video area -->
       <div id="playerWrap" class="relative overflow-hidden rounded-lg bg-black" style="aspect-ratio: 16/9;">
         <div id="player" class="w-full h-full"></div>
 
-        <!-- Fade to black near the end (keeps suggestions hidden) -->
+        <!-- Fade to black near the end -->
         <div id="fadeOverlay"
-             class="absolute inset-0 bg-black opacity-0 pointer-events-none transition-opacity duration-300 z-20">
-        </div>
+             class="absolute inset-0 bg-black opacity-0 pointer-events-none transition-opacity duration-300 z-20"></div>
 
-        <!-- Click blocker: students can see video but cannot click/pause/seek -->
+        <!-- Our clickable Play overlay (above the blocker) -->
+        <button id="customPlay"
+                class="absolute inset-0 z-30 flex items-center justify-center text-white text-lg font-semibold"
+                aria-label="Play video"
+                onclick="window.startModuleVideo()">
+          <span class="px-4 py-2 rounded-lg bg-black/50 border border-white/30">▶ Play</span>
+        </button>
+
+        <!-- Click blocker prevents interacting with the YouTube controls -->
         <div id="clickBlocker" class="absolute inset-0 z-10"></div>
       </div>
 
@@ -35,5 +42,41 @@
     <!-- YouTube API BEFORE module.js -->
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="js/module.js?v=11"></script>
+
+    <!-- Tiny helper that uses the global player created by module.js -->
+    <script>
+      // Called by the big Play button overlay
+      window.startModuleVideo = function () {
+        try {
+          // Hide the button once clicked
+          const btn = document.getElementById('customPlay');
+          if (btn) btn.style.display = 'none';
+
+          // Start playback via the IFrame API (user gesture satisfies autoplay policies)
+          if (window.player && typeof window.player.playVideo === 'function') {
+            window.player.playVideo();
+          } else {
+            // If player isn't ready yet, retry briefly
+            let tries = 0;
+            const t = setInterval(() => {
+              if (window.player && typeof window.player.playVideo === 'function') {
+                clearInterval(t);
+                if (btn) btn.style.display = 'none';
+                window.player.playVideo();
+              } else if (++tries > 30) {
+                clearInterval(t);
+                if (btn) btn.style.display = 'flex'; // show again if we failed
+                alert('Video is still loading—please try Play again.');
+              }
+            }, 200);
+          }
+        } catch (e) {
+          console.error(e);
+          alert('Could not start the video. Try again.');
+          const btn = document.getElementById('customPlay');
+          if (btn) btn.style.display = 'flex';
+        }
+      };
+    </script>
   </body>
 </html>
