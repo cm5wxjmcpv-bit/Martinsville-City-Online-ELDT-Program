@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Martinsville City CDL / ELDT Training Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css?v=3" />
+  <link rel="icon" type="image/png" href="assets/background.png">
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+  <div class="card w-full max-w-md text-center">
+    <h1 class="text-2xl font-bold mb-4 text-gray-800">Martinsville City CDL / ELDT Training Portal</h1>
+    <input id="studentId" type="text" placeholder="Student name or ID" class="w-full p-3 mb-3 border rounded-md" />
+    <input id="password" type="password" placeholder="Password (optional)" class="w-full p-3 mb-4 border rounded-md" />
+    <button onclick="login()" class="btn w-full">Login</button>
+    <p id="error" class="text-red-600 mt-3 hidden">Invalid login credentials</p>
+  </div>
+  <script src="js/auth.js"></script>
+</body>
+</html>
