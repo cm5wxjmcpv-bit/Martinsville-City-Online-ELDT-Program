@@ -3,7 +3,7 @@
 // ============================================
 
 // --- Same Apps Script URL as in module.js ---
-const scriptURL = "https://script.google.com/macros/s/PASTE_YOUR_EXEC_URL_HERE/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbypONS6gG3gJRZsTYdh6m-Wc6s04p3op_MhtpxNcG_TrhI29dkZ1RmEGhaxqXxKTnZXJQ/exec";
 
 // --- Your module catalog (YouTube IDs and titles) ---
 const MODULES = [
