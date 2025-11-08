@@ -2,8 +2,8 @@
 // module.js — no-skip player + Sheet logging
 // ============================================
 
-// --- Configure your Apps Script Web App URL here ---
-const scriptURL = "https://script.google.com/macros/s/AKfycbypONS6gG3gJRZsTYdh6m-Wc6s04p3op_MhtpxNcG_TrhI29dkZ1RmEGhaxqXxKTnZXJQ/exec";
+// --- Your deployed Apps Script Web App URL ---
+const scriptURL = "https://script.google.com/macros/s/AKfycbzTW4vTxa1EFMMBDanJ-cb4EGCJjYeu2cNOfYeELFCHcAfGKVeb86cFUZdjx0m7j8OeFg/exec";
 
 // --- Get URL/module + student name (from login) ---
 const params    = new URLSearchParams(window.location.search);
@@ -79,7 +79,7 @@ async function markAsComplete() {
 
   // POST to Apps Script
   try {
-    const res = await fetch(scriptURL, {
+    await fetch(scriptURL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -87,8 +87,6 @@ async function markAsComplete() {
         module: moduleId
       })
     });
-    // Optional: you can check res.ok, but Apps Script often returns 200 with JSON.
-    // const data = await res.json();
   } catch (err) {
     console.error("Sheet log error:", err);
   }
@@ -98,8 +96,3 @@ async function markAsComplete() {
 document.getElementById("markComplete").addEventListener("click", () => {
   if (!hasCompleted) markAsComplete();
 });
-
-// Helpful warning
-if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(scriptURL)) {
-  console.warn("⚠️ Replace scriptURL with your real Apps Script Web App URL.");
-}
