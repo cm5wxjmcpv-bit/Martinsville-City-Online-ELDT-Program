@@ -1,20 +1,19 @@
 // ============================================
-// module.js — no-skip player + Sheet logging
+// module.js — No-skip video + Google Sheet logging
 // ============================================
 
-// POST endpoint (writes a row when a module finishes)
+// WRITE endpoint — logs completions to your Sheet
 const writeURL = "https://script.google.com/macros/s/AKfycbxu7ecj9gh-Y5vPOzbM1dR3wP4Ovc001Vxma55b40kcQIBI54GR8ZLMfVveet5FviYGsA/exec";
 
-// Params & student
-const params    = new URLSearchParams(location.search);
-const moduleId  = params.get("id") || "Unknown Module";
-const student   = (localStorage.getItem("studentName") || "").trim() || "Unknown Student";
+const params   = new URLSearchParams(location.search);
+const moduleId = params.get("id") || "Unknown Module";
+const student  = (localStorage.getItem("studentName") || "").trim() || "Unknown Student";
 
 let player;
 let videoDuration = 0;
 let hasCompleted  = false;
 
-// YouTube IFrame API callback (loaded by module.html)
+// YouTube IFrame API callback (script loaded by module.html)
 function onYouTubeIframeAPIReady() {
   player = new YT.Player("player", {
     videoId: moduleId,
@@ -31,6 +30,7 @@ function onPlayerReady() {
   document.getElementById("clickBlocker").style.display = "block";
 }
 
+// Custom overlay play button
 window.startModuleVideo = function () {
   document.getElementById("customPlay").style.display = "none";
   document.getElementById("status").innerText = "Playing...";
@@ -42,6 +42,7 @@ function onPlayerStateChange(e) {
   if (e.data === YT.PlayerState.ENDED && !hasCompleted) markAsComplete();
 }
 
+// Fades video to black before end
 function monitorForFade() {
   const fadeOverlay = document.getElementById("fadeOverlay");
   const timer = setInterval(() => {
@@ -52,6 +53,7 @@ function monitorForFade() {
   }, 500);
 }
 
+// Logs completion to Google Sheet
 async function markAsComplete() {
   hasCompleted = true;
 
@@ -62,7 +64,7 @@ async function markAsComplete() {
   status.innerHTML = "✅ <span class='text-green-600 font-semibold'>Marked Complete</span>";
 
   try {
-    // FORM POST (no preflight/CORS issues)
+    // Form POST (avoids preflight/CORS issues)
     const body = new URLSearchParams({ student, module: moduleId });
     await fetch(writeURL, {
       method: "POST",
@@ -74,6 +76,7 @@ async function markAsComplete() {
   }
 }
 
+// Backup manual completion button
 document.getElementById("markComplete").addEventListener("click", () => {
   if (!hasCompleted) markAsComplete();
 });
