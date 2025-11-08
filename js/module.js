@@ -1,9 +1,8 @@
 // ============================================
-// module.js — No-skip video + Google Sheet logging
+// module.js — No-skip video + Google Sheet logging (single URL)
 // ============================================
 
-// WRITE endpoint — logs completions to your Sheet
-const writeURL = "https://script.google.com/macros/s/AKfycbxu7ecj9gh-Y5vPOzbM1dR3wP4Ovc001Vxma55b40kcQIBI54GR8ZLMfVveet5FviYGsA/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbxVWVHPefYeNd_h4Tu1tsyX8-rIxZdUrc9VoBZmIcyYv9R71dsxgecfqfzY8Mg1MAE/exec";
 
 const params   = new URLSearchParams(location.search);
 const moduleId = params.get("id") || "Unknown Module";
@@ -13,7 +12,7 @@ let player;
 let videoDuration = 0;
 let hasCompleted  = false;
 
-// YouTube IFrame API callback (script loaded by module.html)
+// YouTube IFrame API callback (loaded by module.html)
 function onYouTubeIframeAPIReady() {
   player = new YT.Player("player", {
     videoId: moduleId,
@@ -53,7 +52,7 @@ function monitorForFade() {
   }, 500);
 }
 
-// Logs completion to Google Sheet
+// Logs completion to Google Sheet (same URL handles POST + GET)
 async function markAsComplete() {
   hasCompleted = true;
 
@@ -66,7 +65,7 @@ async function markAsComplete() {
   try {
     // Form POST (avoids preflight/CORS issues)
     const body = new URLSearchParams({ student, module: moduleId });
-    await fetch(writeURL, {
+    await fetch(scriptURL, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
       body
