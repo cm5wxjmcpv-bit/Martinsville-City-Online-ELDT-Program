@@ -1,7 +1,8 @@
-// js/module.js — no-skip playback + mobile Play + fade + robust "Mark Complete" + Sheet sync
+// js/module.js — no-skip + mobile Play + fade + "Mark Complete" + Sheet sync (no-cors form post)
 
 // ===== Your Apps Script endpoint (public /exec URL) =====
-const PROGRESS_API = 'https://script.google.com/macros/s/AKfycbznz6jjcSFq5RxRwLFVj5xn0ZU_VZEJLxyHJWzWU-vxOcjnryiRUBC7nvnFCcnL23K1Rg/exec';
+const PROGRESS_API =
+  'https://script.google.com/macros/s/AKfycbzT_DwYALs_PRoAQmAdk2z2bKXP9NY3l9_3vYodDODGagEE7l5ISEy9zRmQfGtCLkRrjQ/exec';
 
 // ===== Query params (module.html?id=YTVIDEOID&title=...&mid=...) =====
 const qp       = new URLSearchParams(location.search);
@@ -29,7 +30,7 @@ const FADE_BEFORE_END_SEC = 2; // start fade slightly before end
 const COMPLETE_AT_END_SEC = 1; // count as complete in last second buffer
 
 // ===== Helpers =====
-const getStudentId = () => localStorage.getItem('studentId') || 'Unknown';
+const getStudentId = () => localStorage.getItem('studentId') || '1001'; // fallback for testing
 const uiMsg = (msg) => { if (statusEl) statusEl.textContent = msg; };
 
 // Local log (keeps Admin page working even when offline)
@@ -50,7 +51,7 @@ async function recordLocally() {
   }
 }
 
-// Cloud log (Google Sheet) — form-encoded to avoid CORS preflight
+// Cloud log (Google Sheet) — form-encoded + no-cors so it always reaches Apps Script
 async function recordToSheet() {
   try {
     const body = new URLSearchParams({
@@ -59,8 +60,8 @@ async function recordToSheet() {
       status: 'Completed',  // matches your Sheet wording
       score: ''             // unused for modules
     });
-    await fetch(PROGRESS_API, { method: 'POST', body });
-    return true;
+    await fetch(PROGRESS_API, { method: 'POST', mode: 'no-cors', body });
+    return true; // we can’t read response in no-cors; assume success if no exception
   } catch (e) {
     console.error('Sheet sync failed:', e);
     return false;
