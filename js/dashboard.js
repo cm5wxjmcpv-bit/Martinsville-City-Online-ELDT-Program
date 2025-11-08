@@ -1,11 +1,10 @@
 // ============================================
-// dashboard.js — Fetches completion data from Sheet
+// dashboard.js — Reads completion data from the same Apps Script URL
 // ============================================
 
-// READ endpoint — returns { ok:true, completed:[moduleIds] }
-const readURL = "https://script.google.com/macros/s/AKfycbzce52bMa2ipXI8U9cM_KINtS76gt_nxzukUxzrMBz3NxxXJ1_u9bwTMGMFaB0f3OwkzQ/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbxVWVHPefYeNd_h4Tu1tsyX8-rIxZdUrc9VoBZmIcyYv9R71dsxgecfqfzY8Mg1MAE/exec";
 
-// Your training modules
+// Your training modules (update IDs/titles as needed)
 const MODULES = [
   { id: "5C_0X6G4ytI", title: "Module 1 — Test Video" },
   { id: "qZkkgkMLsvI", title: "Module 2 — Example" },
@@ -22,7 +21,8 @@ const MODULES = [
 
   try {
     if (student) {
-      const url = `${readURL}?action=status&student=${encodeURIComponent(student)}`;
+      // Unified GET — server returns { ok:true, completed:[moduleIds] }
+      const url = `${scriptURL}?student=${encodeURIComponent(student)}`;
       const res = await fetch(url, { method: "GET" });
       const data = await res.json();
       if (data && data.ok && Array.isArray(data.completed)) {
@@ -33,6 +33,7 @@ const MODULES = [
     console.error("Progress fetch error:", err);
   }
 
+  // Render module tiles
   listEl.innerHTML = "";
   MODULES.forEach((m) => {
     const done = completedSet.has(m.id);
