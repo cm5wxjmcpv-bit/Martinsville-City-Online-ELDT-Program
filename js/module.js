@@ -1,79 +1,109 @@
-// module.js — Anti-skip + Smooth Fade + Completion Logic
+/* Module player with anti-skip + end fade + completion gating */
 
 let player;
-let lastTime = 0;
-let fadeStarted = false;
-let completed = false;
+let duration = 0;
+let lastAllowed = 0;      // furthest time user is allowed to jump to
+let blockSeek = false;
+let faded = false;
+let endFadeSeconds = 4;   // start fade this many seconds before the end
 
-function onYouTubeIframeAPIReady() {
-  const params = new URLSearchParams(window.location.search);
-  const videoId = params.get("id") || "dQw4w9WgXcQ"; // default fallback
+const qs = new URLSearchParams(location.search);
+const videoId = qs.get("id");
+const moduleTitle = qs.get("title") || "Module";
+const student = localStorage.getItem("mfd_student_name") || "Student";
+const titleEl = document.getElementById("moduleTitle");
+const studentLabel = document.getElementById("studentLabel");
+const statusEl = document.getElementById("status");
+const markBtn = document.getElementById("markComplete");
+const fadeOverlay = document.getElementById("fadeOverlay");
 
+if (titleEl) titleEl.textContent = moduleTitle;
+if (studentLabel) studentLabel.textContent = `Signed in as: ${student}`;
+
+// Guard: require a real YouTube ID in the URL
+if (!videoId || videoId.length < 6) {
+  if (statusEl) statusEl.textContent = "Invalid or missing video ID in URL.";
+}
+
+window.onYouTubeIframeAPIReady = function () {
   player = new YT.Player("player", {
-    videoId: videoId,
+    videoId,
+    width: "100%",
+    height: "100%",
     playerVars: {
-      rel: 0,
       controls: 1,
       disablekb: 1,
       modestbranding: 1,
+      rel: 0,
       fs: 0,
+      iv_load_policy: 3
     },
     events: {
       onReady: onPlayerReady,
-      onStateChange: onPlayerStateChange,
-    },
+      onStateChange: onPlayerStateChange
+    }
   });
-}
+};
 
 function onPlayerReady() {
-  const overlay = document.createElement("div");
-  overlay.id = "fadeOverlay";
-  overlay.style.position = "absolute";
-  overlay.style.top = 0;
-  overlay.style.left = 0;
-  overlay.style.width = "100%";
-  overlay.style.height = "100%";
-  overlay.style.backgroundColor = "black";
-  overlay.style.opacity = 0;
-  overlay.style.transition = "opacity 1.5s ease";
-  overlay.style.pointerEvents = "none";
-  document.getElementById("player").appendChild(overlay);
-
-  // Watch progress every 500ms
-  setInterval(() => {
-    if (player && player.getCurrentTime) {
-      const currentTime = player.getCurrentTime();
-      const duration = player.getDuration();
-
-      // Block skipping ahead
-      if (currentTime - lastTime > 2) {
-        player.seekTo(lastTime);
-      } else {
-        lastTime = currentTime;
-      }
-
-      // Trigger fade-out near the end
-      if (!fadeStarted && duration - currentTime <= 3) {
-        fadeStarted = true;
-        overlay.style.opacity = 1;
-      }
-
-      // Mark video complete
-      if (!completed && duration - currentTime <= 0.5) {
-        completed = true;
-        document.getElementById("completeBtn").style.display = "inline-block";
-      }
-    }
-  }, 500);
+  duration = Math.floor(player.getDuration() || 0);
+  lastAllowed = 0;
+  blockSeek = false;
+  faded = false;
+  if (statusEl) statusEl.textContent = "Playing… stay with the video.";
+  watchLoop();
 }
 
-function onPlayerStateChange(event) {
-  if (event.data === YT.PlayerState.PLAYING) {
-    player.unMute();
+function onPlayerStateChange(e) {
+  // 0: ended, 1: playing, 2: paused
+  if (e.data === YT.PlayerState.ENDED) {
+    allowComplete();
   }
 }
 
-function completeModule() {
-  alert("✅ Module completed! Returning to dashboard.");
-  window.location.href = "dashboard.html";
+function watchLoop() {
+  if (!player || typeof player.getCurrentTime !== "function") return;
+
+  const now = player.getCurrentTime() || 0;
+  // Update allowed frontier when video advances normally
+  if (!blockSeek && now > lastAllowed) {
+    lastAllowed = now;
+  }
+
+  // Begin fade near the end to hide YouTube suggestions/ads
+  if (!faded && duration > 0 && now >= Math.max(0, duration - endFadeSeconds)) {
+    faded = true;
+    if (fadeOverlay) fadeOverlay.style.opacity = "1";
+  }
+
+  // Anti-skip: if user seeks forward past lastAllowed + tolerance, snap back
+  const tolerance = 1.0; // seconds
+  if (now > lastAllowed + tolerance) {
+    blockSeek = true;
+    player.seekTo(Math.max(0, lastAllowed - 0.25), true);
+    setTimeout(() => (blockSeek = false), 200);
+  }
+
+  // Re-run ~5 times per second
+  requestAnimationFrame(watchLoop);
 }
+
+function allowComplete() {
+  if (markBtn) {
+    markBtn.disabled = false;
+    if (statusEl) statusEl.textContent = "Nice work! You may mark this module complete.";
+  }
+}
+
+markBtn?.addEventListener("click", () => {
+  markBtn.disabled = true;
+  const completions = JSON.parse(localStorage.getItem("mfd_completions") || "[]");
+  completions.push({
+    student,
+    title: moduleTitle,
+    videoId,
+    completedAt: new Date().toISOString()
+  });
+  localStorage.setItem("mfd_completions", JSON.stringify(completions));
+  if (statusEl) statusEl.textContent = "Completion saved on this device. Return to Dashboard.";
+});
