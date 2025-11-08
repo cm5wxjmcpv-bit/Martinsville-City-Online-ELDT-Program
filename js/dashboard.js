@@ -1,66 +1,93 @@
-// js/dashboard.js — modules list, checkmarks, Final Test unlock
+// ============================================
+// dashboard.js — fetch completion from Sheet
+// ============================================
 
-const PROGRESS_API = 'https://script.google.com/macros/s/AKfycbznz6jjcSFq5RxRwLFVj5xn0ZU_VZEJLxyHJWzWU-vxOcjnryiRUBC7nvnFCcnL23K1Rg/exec';
+// --- Same Apps Script URL as in module.js ---
+const scriptURL = "https://script.google.com/macros/s/PASTE_YOUR_EXEC_URL_HERE/exec";
 
-// Edit your modules here
+// --- Your module catalog (YouTube IDs and titles) ---
 const MODULES = [
-  { id: 'mod1', title: 'Module 1 — Test Video', videoId: '5C_0X6G4ytI' },
-  { id: 'mod2', title: 'Module 2 — Example',    videoId: 'qZkkgkMLsvI' },
-  { id: 'mod3', title: 'Module 3 — Example',    videoId: '-deVMu0kyik' }
+  { id: "5C_0X6G4ytI", title: "Module 1 — Test Video" },
+  { id: "qZkkgkMLsvI", title: "Module 2 — Example" },
+  { id: "-deVMu0kyik", title: "Module 3 — Example" }
 ];
 
-function getStudentId() {
-  return localStorage.getItem('studentId') || 'Unknown';
-}
+(async function init() {
+  const listEl  = document.getElementById("moduleList"); // from dashboard.html
+  const student = (localStorage.getItem("studentName") || "").trim();
 
-async function fetchProgress() {
+  // Build a placeholder UI while loading
+  listEl.innerHTML = `
+    <div class="col-span-1 sm:col-span-2 text-gray-600">Loading your progress…</div>
+  `;
+
+  let completedSet = new Set();
+
   try {
-    const id = encodeURIComponent(getStudentId());
-    const res = await fetch(`${PROGRESS_API}?studentId=${id}`, { method: 'GET' });
-    return await res.json(); // [{ timestamp, studentId, moduleId, status, score }]
-  } catch (e) {
-    console.error('Progress fetch failed:', e);
-    return [];
+    if (student) {
+      const url = `${scriptURL}?action=status&student=${encodeURIComponent(student)}`;
+      const res = await fetch(url, { method: "GET" });
+      const data = await res.json();
+      if (data && data.ok && Array.isArray(data.completed)) {
+        completedSet = new Set(data.completed);
+      }
+    }
+  } catch (err) {
+    console.error("Progress fetch error:", err);
   }
-}
 
-function hasCompleted(progress, moduleId) {
-  return progress.some(r => String(r.moduleId) === String(moduleId) && String(r.status).toLowerCase() === 'completed');
-}
+  // Render modules
+  listEl.innerHTML = "";
+  MODULES.forEach((m) => {
+    const done = completedSet.has(m.id);
+    const href = `module.html?id=${encodeURIComponent(m.id)}`;
 
-async function render() {
-  const list = document.getElementById('moduleList');
-  if (!list) return;
+    const card = document.createElement("a");
+    card.href = href;
+    card.className = "block border rounded-xl p-4 shadow-sm hover:shadow-md transition bg-white/90";
 
-  list.innerHTML = '';
-  const progress = await fetchProgress();
-
-  MODULES.forEach(m => {
-    const done = hasCompleted(progress, m.id);
-    const checkHTML = done
-      ? '<span class="ml-2 inline-flex items-center text-green-600 font-semibold">✓</span>'
-      : '<span class="ml-2 inline-flex items-center text-gray-400">○</span>';
-
-    const a = document.createElement('a');
-    a.href = `module.html?id=${encodeURIComponent(m.videoId)}&title=${encodeURIComponent(m.title)}&mid=${encodeURIComponent(m.id)}`;
-    a.className = 'block p-4 rounded-lg border hover:shadow transition';
-    a.innerHTML = `
-      <div class="font-semibold text-gray-900">${m.title}${checkHTML}</div>
-      <div class="text-sm text-gray-600 mt-1">${done ? 'Completed' : 'Not started'}</div>
+    card.innerHTML = `
+      <div class="flex items-center justify-between">
+        <h2 class="font-semibold text-gray-900">${escapeHtml(m.title)}</h2>
+        ${done
+          ? `<span class="inline-flex items-center gap-1 text-green-700 font-semibold">✅ Completed</span>`
+          : `<span class="inline-flex items-center gap-1 text-gray-500"><span class="w-2 h-2 rounded-full bg-gray-400"></span> Not started</span>`
+        }
+      </div>
     `;
-    list.appendChild(a);
+    listEl.appendChild(card);
   });
 
   // Final Test tile
-  const allDone = MODULES.every(m => hasCompleted(progress, m.id));
-  const test = document.createElement('a');
-  test.href = allDone ? 'test.html' : 'javascript:void(0)';
-  test.className = `block p-4 rounded-lg border transition mt-2 ${allDone ? 'hover:shadow' : 'opacity-50 cursor-not-allowed'}`;
-  test.innerHTML = `
-    <div class="font-semibold text-gray-900">Final Test</div>
-    <div class="text-sm text-gray-600 mt-1">${allDone ? 'Ready' : 'Complete all modules to unlock'}</div>
-  `;
-  list.appendChild(test);
+  renderFinalTestTile(listEl, completedSet);
+})();
+
+function renderFinalTestTile(container, completedSet) {
+  const allDone = MODULES.every(m => completedSet.has(m.id));
+  const wrap = document.createElement("div");
+  wrap.className = "block border rounded-xl p-4 shadow-sm bg-white/90";
+
+  if (allDone) {
+    wrap.innerHTML = `
+      <div class="flex items-center justify-between">
+        <a href="test.html" class="font-semibold text-gray-900 underline">Final Test</a>
+        <span class="inline-flex items-center gap-1 text-green-700 font-semibold">✅ Unlocked</span>
+      </div>
+      <p class="text-sm text-gray-600 mt-1">You’ve completed all modules. Good luck!</p>
+    `;
+  } else {
+    wrap.innerHTML = `
+      <div class="flex items-center justify-between">
+        <span class="font-semibold text-gray-900">Final Test</span>
+        <span class="inline-flex items-center gap-1 text-amber-600 font-semibold">🔒 Locked</span>
+      </div>
+      <p class="text-sm text-gray-600 mt-1">Complete all modules to unlock.</p>
+    `;
+  }
+
+  container.appendChild(wrap);
 }
 
-render();
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+}
