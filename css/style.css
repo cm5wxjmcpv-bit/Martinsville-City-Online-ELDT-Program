@@ -1,3 +1,4 @@
+/* ===== Base site styles ===== */
 body {
   background: url("../assets/background.png") no-repeat center center fixed;
   background-size: 40%;
@@ -26,3 +27,19 @@ body {
   font-weight: 600;
 }
 .btn:hover { background-color: #941c1c; }
+
+/* ===== Video shield additions ===== */
+/* Click-through blocker over the iframe */
+#clickBlocker {
+  background: rgba(255, 255, 255, 0); /* fully transparent */
+  pointer-events: auto;               /* captures all clicks so the iframe can't */
+}
+
+/* Make sure the fade sits above the blocker when it animates */
+#fadeOverlay { z-index: 20; }
+
+/* Optional: ensure player area always keeps proper rounding and no accidental focus */
+#playerWrap iframe {
+  border-radius: 0.5rem;
+  outline: none;
+}
