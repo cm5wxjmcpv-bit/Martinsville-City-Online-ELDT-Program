@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ELDT Training – Player</title>
+  <link rel="stylesheet" href="/css/base.css" />
+  <style>
+    .playerWrap { position: relative; max-width: 960px; margin: 0 auto; }
+    .blackout { position:absolute; inset:0; background:#000; opacity:0; pointer-events:none; transition: opacity .2s; }
+    .blackout.on { opacity:1; }
+    .shield { position:absolute; inset:0; pointer-events:auto; }
+    .controls { display:flex; gap:.5rem; align-items:center; }
+    .completeBadge { padding:.25rem .5rem; border-radius:.5rem; background:#0a0; color:#fff; display:none; }
+    .completeBadge.show { display:inline-block; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/dashboard.html">← Modules</a>
+    <div class="spacer"></div>
+    <div id="who"></div>
+    <button id="logoutBtn">Log out</button>
+  </header>
+
+  <main class="container">
+    <h2 id="title">Loading…</h2>
+    <div class="playerWrap">
+      <div id="player"></div>
+      <div id="blackout" class="blackout"></div>
+      <div class="shield"></div>
+    </div>
+
+    <section class="controls">
+      <span id="status" class="muted">00:00 / --:--</span>
+      <span id="done" class="completeBadge">Completed ✔</span>
+    </section>
+
+    <button id="markBtn" disabled>Mark complete</button>
+    <p id="msg" class="muted"></p>
+  </main>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/player.js"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
+</body>
+</html>
