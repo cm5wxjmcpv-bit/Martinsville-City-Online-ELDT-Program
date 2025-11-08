@@ -1,19 +1,20 @@
 // ============================================
-// module.js — Clean version with no-skip video,
-// fade-to-black, and green check confirmation.
+// module.js — no-skip player + Sheet logging
 // ============================================
 
-// === Extract parameters from URL ===
-const params = new URLSearchParams(window.location.search);
-const moduleId = params.get("id") || "Unknown Module";
-const student = localStorage.getItem("studentName") || "Unknown Student";
-const scriptURL = "https://script.google.com/macros/s/AKfycbzT_DwYALs_PRoAQmAdk2z2bKXP9NY3l9_3vYodDODGagEE7l5ISEy9zRmQfGtCLkRrjQ/exec"; // <-- Replace with your deployed Apps Script URL
+// --- Configure your Apps Script Web App URL here ---
+const scriptURL = "https://script.google.com/macros/s/PASTE_YOUR_EXEC_URL_HERE/exec";
+
+// --- Get URL/module + student name (from login) ---
+const params    = new URLSearchParams(window.location.search);
+const moduleId  = params.get("id") || "Unknown Module";
+const student   = (localStorage.getItem("studentName") || "").trim() || "Unknown Student";
 
 let player;
 let videoDuration = 0;
-let hasCompleted = false;
+let hasCompleted  = false;
 
-// === Initialize YouTube Player ===
+// YouTube IFrame API callback (script is already loaded in module.html)
 function onYouTubeIframeAPIReady() {
   player = new YT.Player("player", {
     videoId: moduleId,
@@ -22,99 +23,83 @@ function onYouTubeIframeAPIReady() {
       modestbranding: 1,
       controls: 0,
       disablekb: 1,
-      fs: 0,
+      fs: 0
     },
     events: {
       onReady: onPlayerReady,
-      onStateChange: onPlayerStateChange,
-    },
+      onStateChange: onPlayerStateChange
+    }
   });
 }
 
-// === On Player Ready ===
-function onPlayerReady(event) {
+function onPlayerReady() {
+  document.getElementById("moduleTitle").textContent = `Module`;
   document.getElementById("status").innerText = "Press ▶ Play to begin.";
   videoDuration = player.getDuration();
+
   document.getElementById("customPlay").style.display = "flex";
   document.getElementById("clickBlocker").style.display = "block";
 }
 
-// === Custom Play Button Logic ===
+// Start playing from custom overlay button
 window.startModuleVideo = function () {
   document.getElementById("customPlay").style.display = "none";
   document.getElementById("status").innerText = "Playing...";
   player.playVideo();
 };
 
-// === Handle Player State Changes ===
 function onPlayerStateChange(event) {
-  // When video starts
   if (event.data === YT.PlayerState.PLAYING) {
-    monitorVideoProgress();
+    monitorForFade();
   }
-
-  // When video ends
   if (event.data === YT.PlayerState.ENDED && !hasCompleted) {
     markAsComplete();
   }
 }
 
-// === Monitor Video Progress for Fade-to-Black ===
-function monitorVideoProgress() {
+// Fade to black ~5 seconds before end
+function monitorForFade() {
   const fadeOverlay = document.getElementById("fadeOverlay");
-
-  const check = setInterval(() => {
+  const timer = setInterval(() => {
     if (!player || typeof player.getCurrentTime !== "function") return;
-
-    const currentTime = player.getCurrentTime();
-
-    // Fade to black 5 seconds before the end
-    if (videoDuration - currentTime <= 5) {
-      fadeOverlay.style.opacity = "1";
-    }
-
-    // Stop checking when video ends
-    if (currentTime >= videoDuration - 0.5) {
-      clearInterval(check);
-    }
+    const t = player.getCurrentTime();
+    if (videoDuration - t <= 5) fadeOverlay.style.opacity = "1";
+    if (t >= videoDuration - 0.5) clearInterval(timer);
   }, 500);
 }
 
-// === Log Completion to Google Sheets ===
-function markAsComplete() {
+async function markAsComplete() {
   hasCompleted = true;
-  const markButton = document.getElementById("markComplete");
+
+  const btn    = document.getElementById("markComplete");
   const status = document.getElementById("status");
+  btn.disabled = true;
+  btn.innerText = "Completed ✅";
+  status.innerHTML = "✅ <span class='text-green-600 font-semibold'>Marked Complete</span>";
 
-  markButton.disabled = true;
-  markButton.innerText = "Completed ✅";
-  status.innerHTML =
-    "✅ <span class='text-green-600 font-semibold'>Marked Complete</span>";
-
-  // Build payload
-  const data = {
-    student: student,
-    module: moduleId,
-    timestamp: new Date().toLocaleString(),
-  };
-
-  // Send to Google Apps Script
-  fetch(scriptURL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-
-  console.log("Completion logged:", data);
+  // POST to Apps Script
+  try {
+    const res = await fetch(scriptURL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        student: student,
+        module: moduleId
+      })
+    });
+    // Optional: you can check res.ok, but Apps Script often returns 200 with JSON.
+    // const data = await res.json();
+  } catch (err) {
+    console.error("Sheet log error:", err);
+  }
 }
 
-// === Allow manual "Mark Complete" (fallback) ===
+// Fallback manual button (kept disabled until end, but in case you enable it)
 document.getElementById("markComplete").addEventListener("click", () => {
   if (!hasCompleted) markAsComplete();
 });
 
-// === Debug message if scriptURL missing ===
-if (scriptURL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
-  console.warn("⚠️ Remember to replace scriptURL with your real Apps Script URL.");
+// Helpful warning
+if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(scriptURL)) {
+  console.warn("⚠️ Replace scriptURL with your real Apps Script Web App URL.");
 }
