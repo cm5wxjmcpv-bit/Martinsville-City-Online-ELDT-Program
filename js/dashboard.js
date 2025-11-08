@@ -2,10 +2,8 @@
 // dashboard.js — fetch completion from Sheet
 // ============================================
 
-// --- Same Apps Script URL as in module.js ---
-const scriptURL = "https://script.google.com/macros/s/AKfycbzTW4vTxa1EFMMBDanJ-cb4EGCJjYeu2cNOfYeELFCHcAfGKVeb86cFUZdjx0m7j8OeFg/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbxz2mDDvqkbEBNQPVZ1j3Pk5vDwsXRDZqMe1vcayDWj8yKJiMNPcB4ONWvXCRpDtx0d8w/exec";
 
-// --- Your module catalog (YouTube IDs and titles) ---
 const MODULES = [
   { id: "5C_0X6G4ytI", title: "Module 1 — Test Video" },
   { id: "qZkkgkMLsvI", title: "Module 2 — Example" },
@@ -13,10 +11,9 @@ const MODULES = [
 ];
 
 (async function init() {
-  const listEl  = document.getElementById("moduleList"); // container in dashboard.html
+  const listEl  = document.getElementById("moduleList");
   const student = (localStorage.getItem("studentName") || "").trim();
 
-  // Loading placeholder
   listEl.innerHTML = `<div class="col-span-1 sm:col-span-2 text-gray-600">Loading your progress…</div>`;
 
   let completedSet = new Set();
@@ -25,6 +22,7 @@ const MODULES = [
     if (student) {
       const url = `${scriptURL}?action=status&student=${encodeURIComponent(student)}`;
       const res = await fetch(url, { method: "GET" });
+      // Many deployments return CORS-OK JSON; if not, open the URL in a new tab to verify output.
       const data = await res.json();
       if (data && data.ok && Array.isArray(data.completed)) {
         completedSet = new Set(data.completed);
@@ -34,7 +32,6 @@ const MODULES = [
     console.error("Progress fetch error:", err);
   }
 
-  // Render modules
   listEl.innerHTML = "";
   MODULES.forEach((m) => {
     const done = completedSet.has(m.id);
@@ -56,7 +53,6 @@ const MODULES = [
     listEl.appendChild(card);
   });
 
-  // Final Test tile
   renderFinalTestTile(listEl, completedSet);
 })();
 
