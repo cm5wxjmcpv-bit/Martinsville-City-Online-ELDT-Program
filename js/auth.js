@@ -1,18 +1,18 @@
-function login() {
-  const id = document.getElementById("studentId").value.trim();
-  const pw = document.getElementById("password").value.trim();
+// Save student name and route to dashboard
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("loginForm");
+  const nameInput = document.getElementById("studentName");
+  const year = document.getElementById("year");
 
-  // Temporary credentials; we'll replace with Google Sheets check later
-  const students = {
-    "1001": "test123",
-    "1002": "driver123",
-    "1003": "learner"
-  };
+  if (year) year.textContent = new Date().getFullYear();
 
-  if (students[id] && students[id] === pw) {
-    localStorage.setItem("studentId", id);
-    window.location.href = "dashboard.html";
-  } else {
-    document.getElementById("error").classList.remove("hidden");
-  }
-}
+  if (!form) return; // If we're not on index.html, exit.
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = nameInput.value.trim();
+    if (!name) return;
+    localStorage.setItem("mfd_student_name", name);
+    location.href = "dashboard.html";
+  });
+});
