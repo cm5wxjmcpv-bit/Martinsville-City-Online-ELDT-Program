@@ -2,10 +2,9 @@
 // module.js — no-skip player + Sheet logging
 // ============================================
 
-const scriptURL = "https://script.google.com/macros/s/AKfycbzTW4vTxa1EFMMBDanJ-cb4EGCJjYeu2cNOfYeELFCHcAfGKVeb86cFUZdjx0m7j8OeFg/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbxz2mDDvqkbEBNQPVZ1j3Pk5vDwsXRDZqMe1vcayDWj8yKJiMNPcB4ONWvXCRpDtx0d8w/exec";
 
-// --- Get URL/module + student name (from login) ---
-const params    = new URLSearchParams(window.location.search);
+const params    = new URLSearchParams(location.search);
 const moduleId  = params.get("id") || "Unknown Module";
 const student   = (localStorage.getItem("studentName") || "").trim() || "Unknown Student";
 
@@ -13,21 +12,12 @@ let player;
 let videoDuration = 0;
 let hasCompleted  = false;
 
-// YouTube IFrame API callback (script is already loaded in module.html)
+// YouTube IFrame API callback (loaded by module.html)
 function onYouTubeIframeAPIReady() {
   player = new YT.Player("player", {
     videoId: moduleId,
-    playerVars: {
-      rel: 0,
-      modestbranding: 1,
-      controls: 0,
-      disablekb: 1,
-      fs: 0
-    },
-    events: {
-      onReady: onPlayerReady,
-      onStateChange: onPlayerStateChange
-    }
+    playerVars: { rel:0, modestbranding:1, controls:0, disablekb:1, fs:0 },
+    events: { onReady:onPlayerReady, onStateChange:onPlayerStateChange }
   });
 }
 
@@ -35,28 +25,21 @@ function onPlayerReady() {
   document.getElementById("moduleTitle").textContent = "Module";
   document.getElementById("status").innerText = "Press ▶ Play to begin.";
   videoDuration = player.getDuration();
-
   document.getElementById("customPlay").style.display = "flex";
   document.getElementById("clickBlocker").style.display = "block";
 }
 
-// Start playing from custom overlay button
 window.startModuleVideo = function () {
   document.getElementById("customPlay").style.display = "none";
   document.getElementById("status").innerText = "Playing...";
   player.playVideo();
 };
 
-function onPlayerStateChange(event) {
-  if (event.data === YT.PlayerState.PLAYING) {
-    monitorForFade();
-  }
-  if (event.data === YT.PlayerState.ENDED && !hasCompleted) {
-    markAsComplete();
-  }
+function onPlayerStateChange(e) {
+  if (e.data === YT.PlayerState.PLAYING) monitorForFade();
+  if (e.data === YT.PlayerState.ENDED && !hasCompleted) markAsComplete();
 }
 
-// Fade to black ~5 seconds before end
 function monitorForFade() {
   const fadeOverlay = document.getElementById("fadeOverlay");
   const timer = setInterval(() => {
@@ -76,24 +59,23 @@ async function markAsComplete() {
   btn.innerText = "Completed ✅";
   status.innerHTML = "✅ <span class='text-green-600 font-semibold'>Marked Complete</span>";
 
-  // POST to Apps Script — use no-cors to avoid preflight blocking
+  // FORM POST (simple request -> no CORS preflight)
   try {
-    await fetch(scriptURL, {
-      method: "POST",
-      mode: "no-cors",                     // <<< key change to ensure the row is written
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        student: student,
-        module: moduleId
-      })
+    const body = new URLSearchParams({
+      student: student,
+      module: moduleId
     });
-    // Response is opaque in no-cors mode; we can't read it, but the Sheet should update.
+    const res = await fetch(scriptURL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+      body
+    });
+    // We don't need to read the response for success.
   } catch (err) {
     console.error("Sheet log error:", err);
   }
 }
 
-// Fallback manual button
 document.getElementById("markComplete").addEventListener("click", () => {
   if (!hasCompleted) markAsComplete();
 });
