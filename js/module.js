@@ -1,217 +1,120 @@
-// js/module.js — no-skip + mobile Play + fade + "Mark Complete" + Sheet sync (no-cors form post)
+// ============================================
+// module.js — Clean version with no-skip video,
+// fade-to-black, and green check confirmation.
+// ============================================
 
-// ===== Your Apps Script endpoint (public /exec URL) =====
-const PROGRESS_API =
-  'https://script.google.com/macros/s/AKfycbzT_DwYALs_PRoAQmAdk2z2bKXP9NY3l9_3vYodDODGagEE7l5ISEy9zRmQfGtCLkRrjQ/exec';
+// === Extract parameters from URL ===
+const params = new URLSearchParams(window.location.search);
+const moduleId = params.get("id") || "Unknown Module";
+const student = localStorage.getItem("studentName") || "Unknown Student";
+const scriptURL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE"; // <-- Replace with your deployed Apps Script URL
 
-// ===== Query params (module.html?id=YTVIDEOID&title=...&mid=...) =====
-const qp       = new URLSearchParams(location.search);
-const videoId  = qp.get('id')    || '';
-const title    = qp.get('title') || 'Module';
-const moduleId = qp.get('mid')   || videoId; // stable ID used for checkmarks
+let player;
+let videoDuration = 0;
+let hasCompleted = false;
 
-// ===== Elements =====
-const titleEl       = document.getElementById('moduleTitle');
-const statusEl      = document.getElementById('status');
-const markBtn       = document.getElementById('markComplete');
-const fadeOverlay   = document.getElementById('fadeOverlay');
-const clickBlocker  = document.getElementById('clickBlocker');
-const customPlayBtn = document.getElementById('customPlay');
-if (titleEl) titleEl.textContent = title;
-
-// ===== State =====
-window.player = null; // global for YouTube API and Play overlay
-let durationSec = 0;
-let lastTime = 0;
-let completed = false;
-let tickTimer = null;
-
-const FADE_BEFORE_END_SEC = 2; // start fade slightly before end
-const COMPLETE_AT_END_SEC = 1; // count as complete in last second buffer
-
-// ===== Helpers =====
-const getStudentId = () => localStorage.getItem('studentId') || '1001'; // fallback for testing
-const uiMsg = (msg) => { if (statusEl) statusEl.textContent = msg; };
-
-// Local log (keeps Admin page working even when offline)
-async function recordLocally() {
-  try {
-    const key = 'mfd_eldt_records';
-    const arr = JSON.parse(localStorage.getItem(key) || '[]');
-    arr.push({
-      student: getStudentId(),
-      title,
-      videoId,
-      moduleId,
-      completedAt: new Date().toISOString()
-    });
-    localStorage.setItem(key, JSON.stringify(arr));
-  } catch (e) {
-    console.error('Local save failed:', e);
-  }
-}
-
-// Cloud log (Google Sheet) — form-encoded + no-cors so it always reaches Apps Script
-async function recordToSheet() {
-  try {
-    const body = new URLSearchParams({
-      studentId: getStudentId(),
-      module: moduleId,     // matches your Sheet's "Module" column
-      status: 'Completed',  // matches your Sheet wording
-      score: ''             // unused for modules
-    });
-    await fetch(PROGRESS_API, { method: 'POST', mode: 'no-cors', body });
-    return true; // we can’t read response in no-cors; assume success if no exception
-  } catch (e) {
-    console.error('Sheet sync failed:', e);
-    return false;
-  }
-}
-
-// Single call that updates UI, logs local, then tries cloud
-async function recordCompletionUI() {
-  if (markBtn) {
-    markBtn.disabled = true;
-    markBtn.textContent = 'Recording…';
-  }
-  uiMsg('Recording completion…');
-
-  await recordLocally();
-  const ok = await recordToSheet();
-
-  if (markBtn) {
-    markBtn.disabled = true;
-    markBtn.textContent = ok ? 'Recorded ✓' : 'Recorded (offline) ✓';
-  }
-  uiMsg(ok ? 'Completion recorded.' : 'Recorded locally. Network issue syncing to Sheet.');
-}
-
-// ===== YouTube IFrame API =====
-window.onYouTubeIframeAPIReady = function () {
-  if (!videoId) {
-    uiMsg('Missing video ID.');
-    return;
-  }
-  window.player = new YT.Player('player', {
-    videoId,
-    width: '100%',
-    height: '100%',
+// === Initialize YouTube Player ===
+function onYouTubeIframeAPIReady() {
+  player = new YT.Player("player", {
+    videoId: moduleId,
     playerVars: {
-      controls: 0,        // hide controls (we block interaction with overlay anyway)
-      disablekb: 1,       // disable keyboard seeking
       rel: 0,
       modestbranding: 1,
+      controls: 0,
+      disablekb: 1,
       fs: 0,
-      iv_load_policy: 3,
-      playsinline: 1      // critical for iOS inline playback
     },
     events: {
-      onReady: onReady,
-      onStateChange: onStateChange
-    }
+      onReady: onPlayerReady,
+      onStateChange: onPlayerStateChange,
+    },
   });
-};
-
-function onReady() {
-  try { durationSec = Math.max(0, window.player.getDuration() || 0); } catch {}
-  if (customPlayBtn) customPlayBtn.style.display = 'flex';
-  uiMsg('Press Play to begin.');
 }
 
-// Big Play overlay (mobile/iOS-safe: mute → play → unmute)
+// === On Player Ready ===
+function onPlayerReady(event) {
+  document.getElementById("status").innerText = "Press ▶ Play to begin.";
+  videoDuration = player.getDuration();
+  document.getElementById("customPlay").style.display = "flex";
+  document.getElementById("clickBlocker").style.display = "block";
+}
+
+// === Custom Play Button Logic ===
 window.startModuleVideo = function () {
-  if (customPlayBtn) customPlayBtn.style.display = 'none';
-  let tries = 0;
-  const t = setInterval(() => {
-    try {
-      if (window.player && typeof window.player.playVideo === 'function') {
-        try { window.player.mute(); } catch {}
-        window.player.playVideo();
-        setTimeout(() => { try { window.player.unMute(); } catch {} }, 400);
-        clearInterval(t);
-      } else if (++tries > 40) {
-        clearInterval(t);
-        if (customPlayBtn) customPlayBtn.style.display = 'flex';
-        alert('Video is loading—tap Play again.');
-      }
-    } catch (e) {
-      console.error(e);
-      clearInterval(t);
-      if (customPlayBtn) customPlayBtn.style.display = 'flex';
-      alert('Could not start the video—try again.');
-    }
-  }, 150);
+  document.getElementById("customPlay").style.display = "none";
+  document.getElementById("status").innerText = "Playing...";
+  player.playVideo();
 };
 
-function onStateChange(e) {
-  if (e.data === YT.PlayerState.PLAYING) startTick();
-  if (e.data === YT.PlayerState.ENDED) handleCompletion();
-}
+// === Handle Player State Changes ===
+function onPlayerStateChange(event) {
+  // When video starts
+  if (event.data === YT.PlayerState.PLAYING) {
+    monitorVideoProgress();
+  }
 
-function startTick() {
-  if (tickTimer) return;
-  tickTimer = setInterval(() => {
-    if (!window.player) return;
-
-    let t = 0, d = durationSec;
-    try {
-      t = window.player.getCurrentTime() || 0;
-      d = durationSec || window.player.getDuration() || 0;
-    } catch {}
-
-    // Fade to black right before the end (hide YT suggestions)
-    if (d > 0 && t >= d - FADE_BEFORE_END_SEC) {
-      if (fadeOverlay) fadeOverlay.style.opacity = '1';
-    } else {
-      if (fadeOverlay) fadeOverlay.style.opacity = '0';
-    }
-
-    // Light anti-skip: snap back if forward jump > 2s
-    if (t - lastTime > 2 && !completed) {
-      try { window.player.seekTo(Math.max(0, lastTime), true); } catch {}
-    } else {
-      lastTime = t;
-    }
-
-    // Auto-detect completion at end buffer
-    if (!completed && d > 0 && t >= d - COMPLETE_AT_END_SEC) {
-      handleCompletion();
-    }
-  }, 250);
-}
-
-function stopTick() {
-  if (tickTimer) {
-    clearInterval(tickTimer);
-    tickTimer = null;
+  // When video ends
+  if (event.data === YT.PlayerState.ENDED && !hasCompleted) {
+    markAsComplete();
   }
 }
 
-async function handleCompletion() {
-  if (completed) return;
-  completed = true;
+// === Monitor Video Progress for Fade-to-Black ===
+function monitorVideoProgress() {
+  const fadeOverlay = document.getElementById("fadeOverlay");
 
-  stopTick();
-  if (fadeOverlay)  fadeOverlay.style.opacity = '1';
-  if (clickBlocker) clickBlocker.style.display = 'none';
+  const check = setInterval(() => {
+    if (!player || typeof player.getCurrentTime !== "function") return;
 
-  if (markBtn) {
-    markBtn.disabled = false;               // allow the click
-    markBtn.textContent = 'Mark Complete';  // show action
-  }
-  uiMsg('Finished. You can mark complete.');
-  // If you want auto-recording without requiring the click, uncomment:
-  // await recordCompletionUI();
+    const currentTime = player.getCurrentTime();
+
+    // Fade to black 5 seconds before the end
+    if (videoDuration - currentTime <= 5) {
+      fadeOverlay.style.opacity = "1";
+    }
+
+    // Stop checking when video ends
+    if (currentTime >= videoDuration - 0.5) {
+      clearInterval(check);
+    }
+  }, 500);
 }
 
-// Button → record completion (UI + local + cloud)
-if (markBtn) {
-  markBtn.addEventListener('click', async () => {
-    await recordCompletionUI();
+// === Log Completion to Google Sheets ===
+function markAsComplete() {
+  hasCompleted = true;
+  const markButton = document.getElementById("markComplete");
+  const status = document.getElementById("status");
+
+  markButton.disabled = true;
+  markButton.innerText = "Completed ✅";
+  status.innerHTML =
+    "✅ <span class='text-green-600 font-semibold'>Marked Complete</span>";
+
+  // Build payload
+  const data = {
+    student: student,
+    module: moduleId,
+    timestamp: new Date().toLocaleString(),
+  };
+
+  // Send to Google Apps Script
+  fetch(scriptURL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
   });
+
+  console.log("Completion logged:", data);
 }
 
-// If the IFrame API was ready before this script loaded
-if (window.YT && YT.Player && !window.player) {
-  window.onYouTubeIframeAPIReady();
+// === Allow manual "Mark Complete" (fallback) ===
+document.getElementById("markComplete").addEventListener("click", () => {
+  if (!hasCompleted) markAsComplete();
+});
+
+// === Debug message if scriptURL missing ===
+if (scriptURL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+  console.warn("⚠️ Remember to replace scriptURL with your real Apps Script URL.");
 }
