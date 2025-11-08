@@ -2,7 +2,7 @@
 // module.js — no-skip player + Sheet logging
 // ============================================
 
-const scriptURL = "https://script.google.com/macros/s/AKfycbxz2mDDvqkbEBNQPVZ1j3Pk5vDwsXRDZqMe1vcayDWj8yKJiMNPcB4ONWvXCRpDtx0d8w/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbzce52bMa2ipXI8U9cM_KINtS76gt_nxzukUxzrMBz3NxxXJ1_u9bwTMGMFaB0f3OwkzQ/exec";
 
 const params    = new URLSearchParams(location.search);
 const moduleId  = params.get("id") || "Unknown Module";
@@ -59,18 +59,14 @@ async function markAsComplete() {
   btn.innerText = "Completed ✅";
   status.innerHTML = "✅ <span class='text-green-600 font-semibold'>Marked Complete</span>";
 
-  // FORM POST (simple request -> no CORS preflight)
   try {
-    const body = new URLSearchParams({
-      student: student,
-      module: moduleId
-    });
-    const res = await fetch(scriptURL, {
+    // FORM POST (no preflight/CORS issues)
+    const body = new URLSearchParams({ student, module: moduleId });
+    await fetch(scriptURL, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
       body
     });
-    // We don't need to read the response for success.
   } catch (err) {
     console.error("Sheet log error:", err);
   }
