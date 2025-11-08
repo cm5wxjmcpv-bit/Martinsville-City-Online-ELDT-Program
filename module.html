@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Martinsville CDL / ELDT Training Module</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/style.css?v=3" />
+    <link rel="stylesheet" href="css/style.css?v=4" />
     <link rel="icon" type="image/png" href="assets/background.png" />
   </head>
   <body class="min-h-screen bg-gray-50 p-4">
@@ -14,13 +14,24 @@
         <h1 id="moduleTitle" class="text-xl font-semibold text-gray-900">Module</h1>
         <a href="dashboard.html" class="text-sm underline text-gray-700 hover:text-blue-600">Back</a>
       </div>
+
+      <!-- Player wrapper with non-clickable shield -->
       <div id="playerWrap" class="relative overflow-hidden rounded-lg bg-black" style="aspect-ratio: 16/9;">
         <div id="player" class="w-full h-full"></div>
-        <div id="fadeOverlay" class="absolute inset-0 bg-black opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+        <!-- Fade to black near the end (keeps suggestions hidden) -->
+        <div id="fadeOverlay"
+             class="absolute inset-0 bg-black opacity-0 pointer-events-none transition-opacity duration-300 z-20">
+        </div>
+
+        <!-- Click blocker: students can see video but cannot click/pause/seek -->
+        <div id="clickBlocker" class="absolute inset-0 z-10"></div>
       </div>
+
       <button id="markComplete" class="btn mt-4" disabled>Mark Complete</button>
       <p id="status" class="text-gray-600 mt-2">Watch to the end to enable.</p>
     </div>
+
     <!-- YouTube API BEFORE module.js -->
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="js/module.js?v=11"></script>
