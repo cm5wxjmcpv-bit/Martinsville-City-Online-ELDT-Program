@@ -2,7 +2,6 @@
 // module.js — no-skip player + Sheet logging
 // ============================================
 
-// --- Your deployed Apps Script Web App URL ---
 const scriptURL = "https://script.google.com/macros/s/AKfycbzTW4vTxa1EFMMBDanJ-cb4EGCJjYeu2cNOfYeELFCHcAfGKVeb86cFUZdjx0m7j8OeFg/exec";
 
 // --- Get URL/module + student name (from login) ---
@@ -33,7 +32,7 @@ function onYouTubeIframeAPIReady() {
 }
 
 function onPlayerReady() {
-  document.getElementById("moduleTitle").textContent = `Module`;
+  document.getElementById("moduleTitle").textContent = "Module";
   document.getElementById("status").innerText = "Press ▶ Play to begin.";
   videoDuration = player.getDuration();
 
@@ -77,22 +76,24 @@ async function markAsComplete() {
   btn.innerText = "Completed ✅";
   status.innerHTML = "✅ <span class='text-green-600 font-semibold'>Marked Complete</span>";
 
-  // POST to Apps Script
+  // POST to Apps Script — use no-cors to avoid preflight blocking
   try {
     await fetch(scriptURL, {
       method: "POST",
+      mode: "no-cors",                     // <<< key change to ensure the row is written
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         student: student,
         module: moduleId
       })
     });
+    // Response is opaque in no-cors mode; we can't read it, but the Sheet should update.
   } catch (err) {
     console.error("Sheet log error:", err);
   }
 }
 
-// Fallback manual button (kept disabled until end, but in case you enable it)
+// Fallback manual button
 document.getElementById("markComplete").addEventListener("click", () => {
   if (!hasCompleted) markAsComplete();
 });
