@@ -2,7 +2,8 @@
 // dashboard.js — fetch completion from Sheet
 // ============================================
 
-const scriptURL = "https://script.google.com/macros/s/AKfycbzce52bMa2ipXI8U9cM_KINtS76gt_nxzukUxzrMBz3NxxXJ1_u9bwTMGMFaB0f3OwkzQ/exec";
+// GET endpoint (returns { ok:true, completed:[<moduleIds>] } for ?action=status&student=NAME)
+const readURL = "https://script.google.com/macros/s/AKfycbzce52bMa2ipXI8U9cM_KINtS76gt_nxzukUxzrMBz3NxxXJ1_u9bwTMGMFaB0f3OwkzQ/exec";
 
 // Your module catalog (update IDs/titles as needed)
 const MODULES = [
@@ -21,7 +22,7 @@ const MODULES = [
 
   try {
     if (student) {
-      const url = `${scriptURL}?action=status&student=${encodeURIComponent(student)}`;
+      const url = `${readURL}?action=status&student=${encodeURIComponent(student)}`;
       const res = await fetch(url, { method: "GET" });
       const data = await res.json();
       if (data && data.ok && Array.isArray(data.completed)) {
@@ -83,5 +84,5 @@ function renderFinalTestTile(container, completedSet) {
 }
 
 function escapeHtml(s) {
-  return s.replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  return s.replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;","&gt;":">&gt;",'"':"&quot;","'":"&#39;" }[c]));
 }
