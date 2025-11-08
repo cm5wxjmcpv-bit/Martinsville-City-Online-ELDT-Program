@@ -2,8 +2,10 @@
 // module.js — no-skip player + Sheet logging
 // ============================================
 
-const scriptURL = "https://script.google.com/macros/s/AKfycbzce52bMa2ipXI8U9cM_KINtS76gt_nxzukUxzrMBz3NxxXJ1_u9bwTMGMFaB0f3OwkzQ/exec";
+// POST endpoint (writes a row when a module finishes)
+const writeURL = "https://script.google.com/macros/s/AKfycbxu7ecj9gh-Y5vPOzbM1dR3wP4Ovc001Vxma55b40kcQIBI54GR8ZLMfVveet5FviYGsA/exec";
 
+// Params & student
 const params    = new URLSearchParams(location.search);
 const moduleId  = params.get("id") || "Unknown Module";
 const student   = (localStorage.getItem("studentName") || "").trim() || "Unknown Student";
@@ -62,7 +64,7 @@ async function markAsComplete() {
   try {
     // FORM POST (no preflight/CORS issues)
     const body = new URLSearchParams({ student, module: moduleId });
-    await fetch(scriptURL, {
+    await fetch(writeURL, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
       body
