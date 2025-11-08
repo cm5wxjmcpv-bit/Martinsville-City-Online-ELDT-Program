@@ -1,11 +1,11 @@
 // ============================================
-// dashboard.js — fetch completion from Sheet
+// dashboard.js — Fetches completion data from Sheet
 // ============================================
 
-// GET endpoint (returns { ok:true, completed:[<moduleIds>] } for ?action=status&student=NAME)
+// READ endpoint — returns { ok:true, completed:[moduleIds] }
 const readURL = "https://script.google.com/macros/s/AKfycbzce52bMa2ipXI8U9cM_KINtS76gt_nxzukUxzrMBz3NxxXJ1_u9bwTMGMFaB0f3OwkzQ/exec";
 
-// Your module catalog (update IDs/titles as needed)
+// Your training modules
 const MODULES = [
   { id: "5C_0X6G4ytI", title: "Module 1 — Test Video" },
   { id: "qZkkgkMLsvI", title: "Module 2 — Example" },
