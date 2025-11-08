@@ -3,7 +3,7 @@
 // ============================================
 
 // --- Configure your Apps Script Web App URL here ---
-const scriptURL = "https://script.google.com/macros/s/PASTE_YOUR_EXEC_URL_HERE/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbypONS6gG3gJRZsTYdh6m-Wc6s04p3op_MhtpxNcG_TrhI29dkZ1RmEGhaxqXxKTnZXJQ/exec";
 
 // --- Get URL/module + student name (from login) ---
 const params    = new URLSearchParams(window.location.search);
