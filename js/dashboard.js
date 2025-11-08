@@ -2,8 +2,9 @@
 // dashboard.js — fetch completion from Sheet
 // ============================================
 
-const scriptURL = "https://script.google.com/macros/s/AKfycbxz2mDDvqkbEBNQPVZ1j3Pk5vDwsXRDZqMe1vcayDWj8yKJiMNPcB4ONWvXCRpDtx0d8w/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbzce52bMa2ipXI8U9cM_KINtS76gt_nxzukUxzrMBz3NxxXJ1_u9bwTMGMFaB0f3OwkzQ/exec";
 
+// Your module catalog (update IDs/titles as needed)
 const MODULES = [
   { id: "5C_0X6G4ytI", title: "Module 1 — Test Video" },
   { id: "qZkkgkMLsvI", title: "Module 2 — Example" },
@@ -22,7 +23,6 @@ const MODULES = [
     if (student) {
       const url = `${scriptURL}?action=status&student=${encodeURIComponent(student)}`;
       const res = await fetch(url, { method: "GET" });
-      // Many deployments return CORS-OK JSON; if not, open the URL in a new tab to verify output.
       const data = await res.json();
       if (data && data.ok && Array.isArray(data.completed)) {
         completedSet = new Set(data.completed);
