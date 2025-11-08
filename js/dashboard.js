@@ -3,7 +3,7 @@
 // ============================================
 
 // --- Same Apps Script URL as in module.js ---
-const scriptURL = "https://script.google.com/macros/s/AKfycbypONS6gG3gJRZsTYdh6m-Wc6s04p3op_MhtpxNcG_TrhI29dkZ1RmEGhaxqXxKTnZXJQ/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbzTW4vTxa1EFMMBDanJ-cb4EGCJjYeu2cNOfYeELFCHcAfGKVeb86cFUZdjx0m7j8OeFg/exec";
 
 // --- Your module catalog (YouTube IDs and titles) ---
 const MODULES = [
@@ -13,13 +13,11 @@ const MODULES = [
 ];
 
 (async function init() {
-  const listEl  = document.getElementById("moduleList"); // from dashboard.html
+  const listEl  = document.getElementById("moduleList"); // container in dashboard.html
   const student = (localStorage.getItem("studentName") || "").trim();
 
-  // Build a placeholder UI while loading
-  listEl.innerHTML = `
-    <div class="col-span-1 sm:col-span-2 text-gray-600">Loading your progress…</div>
-  `;
+  // Loading placeholder
+  listEl.innerHTML = `<div class="col-span-1 sm:col-span-2 text-gray-600">Loading your progress…</div>`;
 
   let completedSet = new Set();
 
