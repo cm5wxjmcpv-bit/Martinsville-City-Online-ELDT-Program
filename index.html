@@ -1,56 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Martinsville CDL Program — Login</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Martinsville City CDL / ELDT Training Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="style.css" />
-  <link rel="icon" href="background.png" />
-  <style>
-    .hidden { display:none; }
-    .card { max-width: 440px; margin: 6vh auto; background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.15); padding: 24px; }
-    .brand { text-align:center; margin-bottom: 16px; }
-    .brand img { width: 84px; height: 84px; object-fit: contain; }
-    .title { text-align:center; margin: 6px 0 18px; font-weight: 800; letter-spacing:.3px; }
-    label { font-weight: 600; font-size: 14px; }
-    input { width: 100%; padding: 12px 14px; margin-top: 6px; border: 1px solid #d5d7de; border-radius: 10px; font-size: 16px; }
-    .row { margin-bottom: 14px; }
-    .btn { width: 100%; padding: 12px 14px; border: none; border-radius: 10px; font-weight: 700; font-size: 16px; cursor: pointer; }
-    .btn-primary { background: #1e3a5f; color: #fff; }
-    .helper { text-align:center; margin-top:10px; font-size: 13px; color:#555; }
-    .error { color: #b00020; font-weight: 700; margin-top: 8px; text-align:center; }
-    .glass { backdrop-filter: blur(3px); background: rgba(255,255,255,.85); }
-    body {
-      background: #f6f7fb url('background.png') center/280px no-repeat fixed;
-      min-height: 100vh;
-    }
-  </style>
+  <link rel="icon" type="image/png" href="background.png">
 </head>
-<body>
-  <main class="card glass">
-    <div class="brand">
-      <img src="background.png" alt="Martinsville CDL Program" />
-    </div>
-    <h1 class="title">Martinsville CDL Program</h1>
-
-    <form id="loginForm" autocomplete="on">
-      <div class="row">
-        <label for="studentId">Your Name or Student ID</label>
-        <input id="studentId" name="studentId" placeholder="e.g., Micah Lackey" />
-      </div>
-
-      <div class="row">
-        <label for="password">Portal Password</label>
-        <input id="password" name="password" type="password" placeholder="Enter password" />
-      </div>
-
-      <button id="loginBtn" class="btn btn-primary" type="submit">Login</button>
-      <div id="error" class="error hidden" aria-live="polite"></div>
-
-      <p class="helper">Problems logging in? Contact your instructor.</p>
-    </form>
-  </main>
-
-  <script src="js/auth.js?v=705"></script>
+<body class="flex items-center justify-center min-h-screen p-4">
+  <div class="card w-full max-w-md text-center">
+    <h1 class="text-2xl font-bold mb-4 text-gray-800">Martinsville City CDL / ELDT Training Portal</h1>
+    <input id="studentId" type="text" placeholder="Student name or ID" class="w-full p-3 mb-3 border rounded-md" />
+    <input id="password" type="password" placeholder="Password (optional)" class="w-full p-3 mb-4 border rounded-md" />
+    <button onclick="login()" class="btn w-full">Login</button>
+    <p id="error" class="text-red-600 mt-3 hidden">Invalid login credentials</p>
+  </div>
+  <script src="js/auth.js?v=702"></script>
 </body>
 </html>
