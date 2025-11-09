@@ -1,8 +1,8 @@
 // ============================================
-// dashboard.js — Reads completion data from the same Apps Script URL
+// dashboard.js — Reads completion data from Apps Script (single URL)
 // ============================================
 
-const scriptURL = "https://script.google.com/macros/s/AKfycbxVWVHPefYeNd_h4Tu1tsyX8-rIxZdUrc9VoBZmIcyYv9R71dsxgecfqfzY8Mg1MAE/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbzsgx6gMKcRRGJJA_D1whgP0SliY_I3WDA9YsDNmPfS5FDY40MW6GgmymcN49kaef2_/exec";
 
 // Your training modules (update IDs/titles as needed)
 const MODULES = [
@@ -18,12 +18,11 @@ const MODULES = [
   listEl.innerHTML = `<div class="col-span-1 sm:col-span-2 text-gray-600">Loading your progress…</div>`;
 
   let completedSet = new Set();
-
   try {
     if (student) {
-      // Unified GET — server returns { ok:true, completed:[moduleIds] }
+      // Unified GET — returns { ok:true, completed:[moduleIds] }
       const url = `${scriptURL}?student=${encodeURIComponent(student)}`;
-      const res = await fetch(url, { method: "GET" });
+      const res = await fetch(url);
       const data = await res.json();
       if (data && data.ok && Array.isArray(data.completed)) {
         completedSet = new Set(data.completed);
@@ -37,7 +36,7 @@ const MODULES = [
   listEl.innerHTML = "";
   MODULES.forEach((m) => {
     const done = completedSet.has(m.id);
-    const href = `module.html?id=${encodeURIComponent(m.id)}`;
+    const href = `module.html?id=${encodeURIComponent(m.id)}&title=${encodeURIComponent(m.title)}`;
 
     const card = document.createElement("a");
     card.href = href;
@@ -48,8 +47,7 @@ const MODULES = [
         <h2 class="font-semibold text-gray-900">${escapeHtml(m.title)}</h2>
         ${done
           ? `<span class="inline-flex items-center gap-1 text-green-700 font-semibold">✅ Completed</span>`
-          : `<span class="inline-flex items-center gap-1 text-gray-500"><span class="w-2 h-2 rounded-full bg-gray-400"></span> Not started</span>`
-        }
+          : `<span class="inline-flex items-center gap-1 text-gray-500"><span class="w-2 h-2 rounded-full bg-gray-400"></span> Not started</span>`}
       </div>
     `;
     listEl.appendChild(card);
@@ -62,25 +60,17 @@ function renderFinalTestTile(container, completedSet) {
   const allDone = MODULES.every(m => completedSet.has(m.id));
   const wrap = document.createElement("div");
   wrap.className = "block border rounded-xl p-4 shadow-sm bg-white/90";
-
-  if (allDone) {
-    wrap.innerHTML = `
-      <div class="flex items-center justify-between">
-        <a href="test.html" class="font-semibold text-gray-900 underline">Final Test</a>
-        <span class="inline-flex items-center gap-1 text-green-700 font-semibold">✅ Unlocked</span>
-      </div>
-      <p class="text-sm text-gray-600 mt-1">You’ve completed all modules. Good luck!</p>
-    `;
-  } else {
-    wrap.innerHTML = `
-      <div class="flex items-center justify-between">
-        <span class="font-semibold text-gray-900">Final Test</span>
-        <span class="inline-flex items-center gap-1 text-amber-600 font-semibold">🔒 Locked</span>
-      </div>
-      <p class="text-sm text-gray-600 mt-1">Complete all modules to unlock.</p>
-    `;
-  }
-
+  wrap.innerHTML = allDone
+    ? `<div class="flex items-center justify-between">
+         <a href="test.html" class="font-semibold text-gray-900 underline">Final Test</a>
+         <span class="inline-flex items-center gap-1 text-green-700 font-semibold">✅ Unlocked</span>
+       </div>
+       <p class="text-sm text-gray-600 mt-1">You’ve completed all modules. Good luck!</p>`
+    : `<div class="flex items-center justify-between">
+         <span class="font-semibold text-gray-900">Final Test</span>
+         <span class="inline-flex items-center gap-1 text-amber-600 font-semibold">🔒 Locked</span>
+       </div>
+       <p class="text-sm text-gray-600 mt-1">Complete all modules to unlock.</p>`;
   container.appendChild(wrap);
 }
 
