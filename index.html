@@ -4,10 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Martinsville CDL Program — Login</title>
-
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="background.png" />
-
   <style>
     .hidden { display:none; }
     .card { max-width: 440px; margin: 7vh auto; background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.15); padding: 24px; }
@@ -37,30 +35,23 @@
     }
   </style>
 </head>
-
 <body>
   <main class="card">
     <div class="brand">
       <img src="background.png" alt="Martinsville CDL Program Logo" />
     </div>
-
     <h1 class="title">Martinsville CDL Program</h1>
 
-    <form id="loginForm" autocomplete="off" novalidate>
-
+    <form id="loginForm" autocomplete="off">
       <label for="studentId">Your Name or Student ID</label>
-      <input id="studentId" name="studentId" required placeholder="" />
-
+      <input id="studentId" name="studentId" required placeholder="">
       <label for="password">Portal Password</label>
-      <input id="password" type="password" name="password" required placeholder="" />
-
+      <input id="password" type="password" name="password" required placeholder="">
       <button id="loginBtn" class="btn" type="submit">Login</button>
-
-      <div id="error" class="error hidden"></div>
+      <div id="error" class="error hidden" aria-live="polite"></div>
     </form>
   </main>
 
-  <!-- Load auth.js fresh -->
-  <script src="js/auth.js?v=800"></script>
+  <script src="js/auth.js?v=810"></script>
 </body>
 </html>
