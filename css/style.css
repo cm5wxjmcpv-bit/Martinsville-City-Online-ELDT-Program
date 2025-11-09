@@ -1,8 +1,11 @@
 /* ================================
    BASE SITE STYLES
    ================================ */
+/* GLOBAL BACKGROUND */
 body {
-  background: url("background.png") no-repeat center center fixed;
+  background: #f6f7fb url("background.png") center center / 260px no-repeat fixed;
+  min-height: 100vh;
+}
   background-size: 40%;
   background-position: center;
   background-color: #f7f7f7;
