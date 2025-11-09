@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard - Martinsville CDL / ELDT</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css?v=3" />
+  <link rel="icon" type="image/png" href="assets/background.png">
   <link rel="stylesheet" href="style.css" />
-  <link rel="icon" type="image/png" href="background.png">
 </head>
 <body class="min-h-screen p-4">
   <div class="card max-w-4xl mx-auto">
@@ -17,5 +18,7 @@
     <div id="moduleList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
   </div>
   <script src="js/dashboard.js?v=702"></script>
+<script src="js/auth.js?v=708"></script>
+<script>requireLogin();</script>
 </body>
 </html>

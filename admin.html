@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin - Martinsville CDL / ELDT</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css?v=3" />
+  <link rel="icon" type="image/png" href="assets/background.png">
   <link rel="stylesheet" href="style.css" />
-  <link rel="icon" type="image/png" href="background.png">
 </head>
 <body class="min-h-screen p-4">
   <div class="card max-w-5xl mx-auto">
@@ -28,5 +29,7 @@
     <button id="clearAll" class="btn mt-4">Clear Local Data</button>
   </div>
   <script src="js/admin.js?v=3"></script>
+<script src="js/auth.js?v=708"></script>
+<script>requireLogin();</script>
 </body>
 </html>
