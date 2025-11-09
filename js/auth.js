@@ -1,19 +1,24 @@
-// auth.js — store student name/ID and go to dashboard
-document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("loginBtn");
-  if (btn) btn.addEventListener("click", login);
-});
+// js/auth.js
+const API_URL = "https://script.google.com/macros/s/AKfycbyZA8eMIPHUkaECP6rqRjApA8vWNypsdZofdEdxv-41yZxlHaCh-TFKvIlKdsFBkmOj/exec";
 
 function login() {
-  const student = (document.getElementById("studentId")?.value || "").trim();
-  const err = document.getElementById("error");
+  const student = (document.getElementById("studentId").value || "").trim();
+  const pwd = (document.getElementById("password").value || "").trim();
 
   if (!student) {
-    if (err) { err.textContent = "Enter your name or student ID."; err.classList.remove("hidden"); }
-    else alert("Enter your name or student ID.");
+    const err = document.getElementById("error");
+    if (err) { err.textContent = "Please enter your name/ID."; err.classList.remove("hidden"); }
     return;
   }
 
-  localStorage.setItem("studentName", student);
-  window.location.href = "dashboard.html";
+  // (optional) simple password check: leave blank to allow anyone
+  // if (pwd !== "yourPassword") { ... }
+
+  localStorage.setItem("student", student);
+  localStorage.setItem("studentId", student);
+
+  // go to dashboard with student in query too
+  const url = new URL("dashboard.html", location.href);
+  url.searchParams.set("student", student);
+  location.assign(url.toString());
 }
