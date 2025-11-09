@@ -1,4 +1,4 @@
-// auth.js — store student name/ID and go to dashboard
+// auth.js — simple local login
 function login() {
   const student = (document.getElementById("studentId")?.value || "").trim();
   const err = document.getElementById("error");
