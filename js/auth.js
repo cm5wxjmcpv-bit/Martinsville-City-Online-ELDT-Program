@@ -1,7 +1,19 @@
-// auth.js
+// auth.js — store student name/ID and go to dashboard
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("loginBtn");
+  if (btn) btn.addEventListener("click", login);
+});
+
 function login() {
   const student = (document.getElementById("studentId")?.value || "").trim();
-  if (!student) { alert("Enter name"); return; }
+  const err = document.getElementById("error");
+
+  if (!student) {
+    if (err) { err.textContent = "Enter your name or student ID."; err.classList.remove("hidden"); }
+    else alert("Enter your name or student ID.");
+    return;
+  }
+
   localStorage.setItem("studentName", student);
   window.location.href = "dashboard.html";
 }
