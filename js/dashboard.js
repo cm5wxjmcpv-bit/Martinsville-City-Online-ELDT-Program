@@ -1,82 +1,88 @@
-// js/dashboard.js
-const API_URL = "https://script.google.com/macros/s/AKfycbyZA8eMIPHUkaECP6rqRjApA8vWNypsdZofdEdxv-41yZxlHaCh-TFKvIlKdsFBkmOj/exec";
+// ============================================
+// dashboard.js — robust render with safety checks
+// ============================================
 
-const student =
-  localStorage.getItem("student") ||
-  new URLSearchParams(location.search).get("student") ||
-  "";
+const scriptURL = "https://script.google.com/macros/s/AKfycbyZA8eMIPHUkaECP6rqRjApA8vWNypsdZofdEdxv-41yZxlHaCh-TFKvIlKdsFBkmOj/exec";
 
-if (!student) {
-  // bounce back to login if no student found
-  location.replace("index.html");
-}
-
-// Define your modules here (id, title, and YouTube video id)
+// Your training modules (update IDs/titles as needed)
 const MODULES = [
-  { id: "intro",   title: "Introduction to CDL/ELDT", vid: "VIDEO_ID_1" },
-  { id: "safety",  title: "Safety & Regulations",      vid: "VIDEO_ID_2" },
-  { id: "vehicle", title: "Vehicle Basics",            vid: "VIDEO_ID_3" }
+  { id: "5C_0X6G4ytI", title: "Module 1 — Test Video" },
+  { id: "qZkkgkMLsvI", title: "Module 2 — Example" },
+  { id: "-deVMu0kyik", title: "Module 3 — Example" }
 ];
 
-async function fetchCompleted() {
+document.addEventListener("DOMContentLoaded", initDashboard);
+
+async function initDashboard() {
+  const listEl = document.getElementById("moduleList");
+  if (!listEl) {
+    console.error("Missing #moduleList in dashboard.html");
+    return;
+  }
+
+  const student = (localStorage.getItem("studentName") || "").trim();
+  listEl.innerHTML = `<div class="col-span-1 sm:col-span-2 text-gray-600">Loading your progress…</div>`;
+
+  let completedSet = new Set();
+
   try {
-    const url = new URL(API_URL);
-    url.searchParams.set("student", student);
-    url.searchParams.set("action", "status");
-    const res = await fetch(url.toString(), { method: "GET" });
-    const data = await res.json();
-    if (data?.ok && Array.isArray(data.completed)) {
-      return new Set(data.completed);
+    if (student) {
+      const url = `${scriptURL}?student=${encodeURIComponent(student)}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data && data.ok && Array.isArray(data.completed)) {
+        completedSet = new Set(data.completed);
+      }
     }
-  } catch (_e) {}
-  return new Set();
-}
+  } catch (err) {
+    console.error("Progress fetch error:", err);
+  }
 
-function moduleLink(m) {
-  const u = new URL("module.html", location.href);
-  u.searchParams.set("id", m.id);
-  u.searchParams.set("vid", m.vid);
-  return u.toString();
-}
+  listEl.innerHTML = "";
+  MODULES.forEach((m) => {
+    const done = completedSet.has(m.id);
+    const href = `module.html?id=${encodeURIComponent(m.id)}&title=${encodeURIComponent(m.title)}`;
 
-async function render() {
-  const completed = await fetchCompleted();
-  const wrap = document.getElementById("moduleList");
-  wrap.innerHTML = "";
-
-  MODULES.forEach(m => {
-    const done = completed.has(m.id);
     const card = document.createElement("a");
-    card.href = moduleLink(m);
-    card.className = "block border rounded-lg p-4 hover:shadow";
+    card.href = href;
+    card.className = "block border rounded-xl p-4 shadow-sm hover:shadow-md transition bg-white/90";
+
     card.innerHTML = `
       <div class="flex items-center justify-between">
-        <div>
-          <div class="font-semibold">${m.title}</div>
-          <div class="text-sm text-gray-600">Module ID: ${m.id}</div>
-        </div>
-        <div class="text-sm ${done ? 'text-green-700' : 'text-gray-500'}">
-          ${done ? '✅ Completed' : '⏳ Not completed'}
-        </div>
+        <h2 class="font-semibold text-gray-900">${escapeHtml(m.title)}</h2>
+        ${done
+          ? `<span class="inline-flex items-center gap-1 text-green-700 font-semibold">✅ Completed</span>`
+          : `<span class="inline-flex items-center gap-1 text-gray-500"><span class="w-2 h-2 rounded-full bg-gray-400"></span> Not started</span>`
+        }
       </div>
     `;
-    wrap.appendChild(card);
+    listEl.appendChild(card);
   });
 
-  // Add Final Test tile
-  const testA = document.createElement("a");
-  testA.href = "test.html";
-  testA.className = "block border rounded-lg p-4 hover:shadow";
-  testA.innerHTML = `
-    <div class="flex items-center justify-between">
-      <div>
-        <div class="font-semibold">Final ELDT Theory Quiz</div>
-        <div class="text-sm text-gray-600">Must score ≥ 80%</div>
-      </div>
-      <div class="text-sm text-blue-700">Start ➜</div>
-    </div>
-  `;
-  wrap.appendChild(testA);
+  renderFinalTestTile(listEl, completedSet);
 }
 
-render();
+function renderFinalTestTile(container, completedSet) {
+  const allDone = MODULES.every(m => completedSet.has(m.id));
+  const wrap = document.createElement("div");
+  wrap.className = "block border rounded-xl p-4 shadow-sm bg-white/90";
+
+  wrap.innerHTML = allDone
+    ? `<div class="flex items-center justify-between">
+         <a href="test.html" class="font-semibold text-gray-900 underline">Final Test</a>
+         <span class="inline-flex items-center gap-1 text-green-700 font-semibold">✅ Unlocked</span>
+       </div>
+       <p class="text-sm text-gray-600 mt-1">You’ve completed all modules. Good luck!</p>`
+    : `<div class="flex items-center justify-between">
+         <span class="font-semibold text-gray-900">Final Test</span>
+         <span class="inline-flex items-center gap-1 text-amber-600 font-semibold">🔒 Locked</span>
+       </div>
+       <p class="text-sm text-gray-600 mt-1">Complete all modules to unlock.</p>`;
+
+  container.appendChild(wrap);
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+}

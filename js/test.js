@@ -1,84 +1,65 @@
-// js/test.js
-const API_URL = "https://script.google.com/macros/s/AKfycbyZA8eMIPHUkaECP6rqRjApA8vWNypsdZofdEdxv-41yZxlHaCh-TFKvIlKdsFBkmOj/exec";
+// ============================================
+// test.js — grade quiz + log score
+// ============================================
 
-const student =
-  localStorage.getItem("student") ||
-  new URLSearchParams(location.search).get("student") ||
-  "";
+const scriptURL = "https://script.google.com/macros/s/AKfycbyZA8eMIPHUkaECP6rqRjApA8vWNypsdZofdEdxv-41yZxlHaCh-TFKvIlKdsFBkmOj/exec";
 
-const TEST_ID = "final";
-const TEST_TITLE = "Final ELDT Theory Quiz";
+const student    = (localStorage.getItem("studentName") || "").trim() || "Unknown Student";
+const TEST_ID    = "final";
+const TEST_TITLE = "Final Test";
+const PASS_PCT   = 80;
 
-const quizEl = document.getElementById("quiz");
-const submitBtn = document.getElementById("submitBtn");
-const resultEl = document.getElementById("result");
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("quizForm");
+  const resultEl = document.getElementById("quizResult");
+  if (!form) { console.error("quizForm not found"); return; }
 
-// Example 10-question quiz (replace with your real items)
-const QUESTIONS = [
-  { q: "CDL stands for…",   a: ["Commercial Driver’s License","Certified Driving Log","Commercial Delivery License","Controlled Driving License"], correct: 0 },
-  { q: "ELDT refers to…",   a: ["Entry-Level Driver Training","Emergency Loader Dump Truck","Engine Load Data Table","Enhanced Logbook Data Tracking"], correct: 0 },
-  { q: "Pre-trip is done…", a: ["Before operating","After operating","Weekly","Only if lights fail"], correct: 0 },
-  { q: "Air brake leak test checks…", a: ["Pressure loss","Coolant level","Fuel quality","Horn volume"], correct: 0 },
-  { q: "Tires must be free of…", a: ["Cuts/bulges","Tread","Air","Valve caps"], correct: 0 },
-  { q: "Three points of contact help prevent…", a:["Falls","Rollovers","Jackknives","Skids"], correct: 0 },
-  { q: "DOT HOS manages…", a:["Driver fatigue","Tire pressure","Fuel economy","Coolant change"], correct: 0 },
-  { q: "Blind spots are also called…", a:["No-zones","Hot zones","Safe zones","Clear zones"], correct: 0 },
-  { q: "Load securement prevents…", a:["Shifting/escape","Idling","ABS faults","Insurance"], correct: 0 },
-  { q: "Backing safest when…", a:["Using a spotter","Windows down only","At night only","On gravel"], correct: 0 }
-];
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const { score, total } = gradeQuiz();
+    const percent = Math.round((score / total) * 100);
+    const passed  = percent >= PASS_PCT;
 
-function renderQuiz() {
-  quizEl.innerHTML = QUESTIONS.map((item, idx) => {
-    const opts = item.a.map((opt, j) => `
-      <label class="block">
-        <input type="radio" name="q${idx}" value="${j}" class="mr-2"/> ${opt}
-      </label>
-    `).join("");
-    return `
-      <div class="border rounded p-3">
-        <div class="font-medium mb-2">${idx+1}. ${item.q}</div>
-        ${opts}
-      </div>
-    `;
-  }).join("");
-}
+    if (resultEl) {
+      resultEl.innerHTML = `
+        <div class="p-3 rounded-lg border bg-white/90">
+          <div class="text-lg font-semibold ${passed ? 'text-green-700' : 'text-red-700'}">
+            ${passed ? '✅ Passed' : '❌ Not Passed'}
+          </div>
+          <div class="text-gray-800 mt-1">Score: <b>${score}</b> / ${total} (${percent}%)</div>
+        </div>`;
+      resultEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
 
-renderQuiz();
-
-submitBtn.addEventListener("click", async (e) => {
-  e.preventDefault();
-
-  if (!student) { alert("No student found—please log in again."); location.replace("index.html"); return; }
-
-  let score = 0;
-  QUESTIONS.forEach((item, i) => {
-    const chosen = document.querySelector(`input[name="q${i}"]:checked`);
-    if (chosen && Number(chosen.value) === item.correct) score++;
-  });
-
-  const total = QUESTIONS.length;
-  const percent = Math.round((score / total) * 100);
-  const passed = percent >= 80;
-
-  resultEl.textContent = `Score: ${score}/${total} (${percent}%) — ${passed ? "PASS ✅" : "RETAKE ❌"}`;
-
-  try {
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    try {
+      const body = new URLSearchParams({
         student,
         testId: TEST_ID,
         testTitle: TEST_TITLE,
-        score,
-        total,
-        percent,
-        passed
-      })
-    });
-    const data = await res.json();
-    if (!data?.ok) throw new Error(data?.error || "Failed to log score");
-  } catch (err) {
-    alert("Could not log test score: " + err.message);
-  }
+        score: String(score),
+        total: String(total),
+        percent: String(percent),
+        passed: String(passed)
+      });
+      await fetch(scriptURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+        body
+      });
+    } catch (err) {
+      console.error("Score log error:", err);
+    }
+  });
 });
+
+function gradeQuiz() {
+  const fieldsets = Array.from(document.querySelectorAll("fieldset[data-qid]"));
+  let score = 0, total = 0;
+  fieldsets.forEach(fs => {
+    total += 1;
+    const name = fs.getAttribute("data-qid");
+    const picked = document.querySelector(`input[name="${CSS.escape(name)}"]:checked`);
+    if (picked && picked.hasAttribute("data-correct")) score += 1;
+  });
+  return { score, total };
+}

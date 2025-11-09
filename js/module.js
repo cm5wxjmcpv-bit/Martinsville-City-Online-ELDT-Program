@@ -1,98 +1,84 @@
-// js/module.js
-const API_URL = "https://script.google.com/macros/s/AKfycbyZA8eMIPHUkaECP6rqRjApA8vWNypsdZofdEdxv-41yZxlHaCh-TFKvIlKdsFBkmOj/exec";
-const END_GRACE = 0.05; // last 5%
+// ============================================
+// module.js — no-skip + Sheet logging (robust)
+// ============================================
 
-const params = new URLSearchParams(location.search);
-const moduleId = (params.get("id") || "").trim();
-const ytId = (params.get("vid") || moduleId || "").trim();
+const scriptURL = "https://script.google.com/macros/s/AKfycbyZA8eMIPHUkaECP6rqRjApA8vWNypsdZofdEdxv-41yZxlHaCh-TFKvIlKdsFBkmOj/exec";
 
-const student =
-  localStorage.getItem("student") ||
-  new URLSearchParams(location.search).get("student") ||
-  "";
+const params      = new URLSearchParams(location.search);
+const moduleId    = params.get("id") || "Unknown Module";
+const moduleTitle = params.get("title") || "Module";
+const student     = (localStorage.getItem("studentName") || "").trim() || "Unknown Student";
 
-const moduleTitleEl = document.getElementById("moduleTitle");
-const statusEl = document.getElementById("status");
-const btnComplete = document.getElementById("markComplete");
-const fadeOverlay = document.getElementById("fadeOverlay");
-const clickBlocker = document.getElementById("clickBlocker");
-const customPlayBtn = document.getElementById("customPlay");
+let player, videoDuration = 0, hasCompleted = false;
 
-if (moduleId && moduleTitleEl && moduleTitleEl.textContent.trim() === "Module") {
-  moduleTitleEl.textContent = `Module — ${moduleId}`;
+document.addEventListener("DOMContentLoaded", () => {
+  const titleEl = document.getElementById("moduleTitle");
+  if (titleEl) titleEl.textContent = moduleTitle;
+});
+
+// YouTube IFrame API callback (loaded by module.html)
+function onYouTubeIframeAPIReady() {
+  player = new YT.Player("player", {
+    videoId: moduleId,
+    playerVars: { rel:0, modestbranding:1, controls:0, disablekb:1, fs:0 },
+    events: { onReady:onPlayerReady, onStateChange:onPlayerStateChange }
+  });
 }
 
-let player, duration = 0, lastTime = 0, completeUnlocked = false;
+function onPlayerReady() {
+  const status = document.getElementById("status");
+  if (status) status.innerText = "Press ▶ Play to begin.";
 
-// YouTube API callback
-window.onYouTubeIframeAPIReady = function () {
-  player = new YT.Player("player", {
-    videoId: ytId || "dQw4w9WgXcQ",
-    playerVars: { controls: 0, disablekb: 1, rel: 0, modestbranding: 1, playsinline: 1 },
-    events: { onReady, onStateChange }
-  });
+  videoDuration = player.getDuration();
+  const playBtn = document.getElementById("customPlay");
+  const blocker = document.getElementById("clickBlocker");
+  if (playBtn) playBtn.style.display = "flex";
+  if (blocker) blocker.style.display = "block";
+}
+
+window.startModuleVideo = function () {
+  const playBtn = document.getElementById("customPlay");
+  const status = document.getElementById("status");
+  if (playBtn) playBtn.style.display = "none";
+  if (status) status.innerText = "Playing...";
+  player.playVideo();
 };
-window.startModuleVideo = function () { if (player) player.playVideo(); };
 
-function onReady() {
-  duration = Math.max(1, player.getDuration() || 1);
-  clickBlocker.style.pointerEvents = "auto";
-  statusEl.textContent = "Press Play to begin.";
-  btnComplete.disabled = true;
-  customPlayBtn.style.display = "flex";
+function onPlayerStateChange(e) {
+  if (e.data === YT.PlayerState.PLAYING) monitorForFade();
+  if (e.data === YT.PlayerState.ENDED && !hasCompleted) markAsComplete();
+}
 
-  setInterval(() => {
+function monitorForFade() {
+  const fadeOverlay = document.getElementById("fadeOverlay");
+  const timer = setInterval(() => {
     if (!player || typeof player.getCurrentTime !== "function") return;
     const t = player.getCurrentTime();
-
-    // prevent seeking
-    if (t > lastTime + 2 && t < duration * (1 - END_GRACE)) {
-      player.seekTo(lastTime, true);
-    } else {
-      lastTime = t;
-    }
-
-    // unlock near the end
-    if (!completeUnlocked && t >= duration * (1 - END_GRACE)) {
-      completeUnlocked = true;
-      btnComplete.disabled = false;
-      statusEl.textContent = "You may now mark this module complete.";
-      fadeOverlay.style.opacity = "1"; // fade to black
-    }
+    if (fadeOverlay && (videoDuration - t <= 5)) fadeOverlay.style.opacity = "1";
+    if (t >= videoDuration - 0.5) clearInterval(timer);
   }, 500);
 }
 
-function onStateChange(ev) {
-  if (ev.data === YT.PlayerState.PLAYING) {
-    statusEl.textContent = "Playing…";
-    customPlayBtn.style.display = "none";
+async function markAsComplete() {
+  hasCompleted = true;
+  const btn = document.getElementById("markComplete");
+  const status = document.getElementById("status");
+  if (btn) { btn.disabled = true; btn.innerText = "Completed ✅"; }
+  if (status) status.innerHTML = "✅ <span class='text-green-600 font-semibold'>Marked Complete</span>";
+
+  try {
+    const body = new URLSearchParams({ student, module: moduleId, title: moduleTitle });
+    await fetch(scriptURL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+      body
+    });
+  } catch (err) {
+    console.error("Sheet log error:", err);
   }
 }
 
-btnComplete.addEventListener("click", async () => {
-  if (!student) { alert("No student name found—please log in again."); location.replace("index.html"); return; }
-  if (!completeUnlocked) { alert("Please finish the module first."); return; }
-
-  const moduleTitle = (moduleTitleEl?.textContent || "").trim();
-
-  try {
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        student,
-        moduleId,
-        moduleTitle
-      })
-    });
-    const data = await res.json();
-    if (data?.ok) {
-      statusEl.textContent = "Logged! Returning to dashboard…";
-      setTimeout(() => { location.assign("dashboard.html"); }, 800);
-    } else {
-      throw new Error(data?.error || "Unknown error");
-    }
-  } catch (err) {
-    alert("Failed to log completion: " + err.message);
-  }
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("markComplete");
+  if (btn) btn.addEventListener("click", () => { if (!hasCompleted) markAsComplete(); });
 });
