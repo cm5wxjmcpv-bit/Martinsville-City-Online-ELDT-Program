@@ -8,12 +8,100 @@ body {
   background-color: #f6f7fb;
   min-height: 100vh;
 }
-@media (max-width: 600px) {
-  body { background-size: 220px; background-position: center 20px; }
+
+/* ================================
+   BASE SITE STYLES
+   ================================ */
+body {
+  background: url("../assets/background.png") no-repeat center center fixed;
+  background-size: 40%;
+  background-position: center;
+  background-color: #f7f7f7;
+  background-blend-mode: multiply;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
 }
 
-/* shared bits */
-.error { color:#b00020; font-weight:700; margin-top:8px; text-align:center; }
-.topbar { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; background:#0f2744; color:#fff; }
-.topbar a { color:#cfe2ff; text-decoration:underline; font-size:14px; }
-.container { max-width:1100px; margin:18px auto; padding:0 16px; } 
+.card {
+  background-color: rgba(255, 255, 255, 0.92);
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.brand-red { color: #B22222; }
+
+.btn {
+  background-color: #B22222;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn:hover {
+  background-color: #941c1c;
+}
+
+/* ================================
+   VIDEO AREA & OVERLAYS
+   ================================ */
+
+/* Container styling for video frame */
+#playerWrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background: black;
+}
+
+/* Prevent user from clicking or scrubbing */
+#clickBlocker {
+  background: rgba(255, 255, 255, 0); /* fully transparent */
+  pointer-events: auto;                /* intercepts clicks */
+  z-index: 10;
+}
+
+/* Fade overlay for end-of-video blackout */
+#fadeOverlay {
+  z-index: 20;
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Big centered play button overlay */
+#customPlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 600;
+  background: transparent;
+  z-index: 30;
+  cursor: pointer;
+}
+
+#customPlay span {
+  background-color: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.5rem;
+}
+
+/* Optional hover effect on play button */
+#customPlay:hover span {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* Ensure player keeps rounded corners and no focus outline */
+#playerWrap iframe {
+  border-radius: 0.5rem;
+  outline: none;
+  border: none;
+}

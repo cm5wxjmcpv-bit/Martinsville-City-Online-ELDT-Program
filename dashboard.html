@@ -1,26 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dashboard — Martinsville CDL Program</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - Martinsville CDL / ELDT</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="style.css" />
+  <link rel="icon" type="image/png" href="background.png">
 </head>
-<body>
-  <header class="topbar">
-    <div><strong>Martinsville CDL Program</strong> — Dashboard</div>
-    <nav>
-      <a href="dashboard.html">Dashboard</a> &nbsp;|&nbsp;
+<body class="min-h-screen p-4">
+  <div class="card max-w-4xl mx-auto">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-xl font-bold text-gray-900">Welcome to Martinsville CDL / ELDT Training</h1>
       <a href="#" onclick="logout()">Logout</a>
-    </nav>
-  </header>
-  <div class="container">
-    <div id="dashboard-root"></div>
+    </div>
+    <div id="moduleList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
   </div>
-  <script src="js/auth.js?v=820"></script>
-  <script>requireLogin();</script>
-  <!-- Load YouTube Iframe API for video control (prevents skipping) -->
-  <script src="https://www.youtube.com/iframe_api"></script>
-  <script src="js/dashboard.js?v=820"></script>
+  <script src="js/dashboard.js?v=702"></script>
+<script src="js/auth.js?v=830"></script>
+<script>requireLogin();</script>
 </body>
 </html>
