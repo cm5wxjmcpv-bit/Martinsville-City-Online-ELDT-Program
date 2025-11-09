@@ -2,7 +2,7 @@
    BASE SITE STYLES
    ================================ */
 body {
-  background: url("../assets/background.png") no-repeat center center fixed;
+  background: url("background.png") no-repeat center center fixed;
   background-size: 40%;
   background-position: center;
   background-color: #f7f7f7;
