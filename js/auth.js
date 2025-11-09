@@ -1,11 +1,14 @@
-function login(){
-  const id = document.getElementById('studentId')?.value.trim();
-  // password input kept for UI compatibility, not enforced
-  if(!id){
-    const err = document.getElementById('error');
-    if(err){ err.classList.remove('hidden'); err.textContent = 'Please enter your name or ID.'; }
+// auth.js — store student name/ID and go to dashboard
+function login() {
+  const student = (document.getElementById("studentId")?.value || "").trim();
+  const err = document.getElementById("error");
+
+  if (!student) {
+    if (err) { err.textContent = "Enter your name or student ID."; err.classList.remove("hidden"); }
+    else alert("Enter your name or student ID.");
     return;
   }
-  localStorage.setItem('mfd_student_name', id);
-  location.href = 'dashboard.html';
+
+  localStorage.setItem("studentName", student);
+  window.location.href = "dashboard.html";
 }
