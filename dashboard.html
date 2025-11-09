@@ -1,21 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard - Martinsville CDL / ELDT</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="css/style.css?v=3" />
-  <link rel="icon" type="image/png" href="assets/background.png">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard — Martinsville CDL Program</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .topbar { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; background:#0f2744; color:#fff; }
+    .topbar a { color:#cfe2ff; text-decoration:underline; font-size:14px; }
+    .container { max-width: 1100px; margin: 18px auto; padding: 0 16px; }
+  </style>
 </head>
-<body class="min-h-screen p-4">
-  <div class="card max-w-4xl mx-auto">
-    <div class="flex items-center justify-between mb-4">
-      <h1 class="text-xl font-bold text-gray-900">Welcome to Martinsville CDL / ELDT Training</h1>
-      <a href="index.html" class="text-sm underline text-gray-700">Logout</a>
-    </div>
-    <div id="moduleList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+<body>
+  <header class="topbar">
+    <div><strong>Martinsville CDL Program</strong> — Dashboard</div>
+    <nav>
+      <a href="#" onclick="logout()">Logout</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <div id="dashboard-root"></div>
   </div>
-  <script src="js/dashboard.js?v=702"></script>
+
+  <script src="auth.js"></script>
+  <script>requireLogin();</script>
+  <script src="dashboard.js"></script>
 </body>
 </html>
