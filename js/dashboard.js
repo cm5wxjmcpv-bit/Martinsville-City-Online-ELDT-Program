@@ -1,10 +1,10 @@
 // ============================================
-// dashboard.js — Reads completion data from Apps Script (single URL)
+// dashboard.js — Reads completion data
 // ============================================
 
-const scriptURL = "https://script.google.com/macros/s/AKfycbzsgx6gMKcRRGJJA_D1whgP0SliY_I3WDA9YsDNmPfS5FDY40MW6GgmymcN49kaef2_/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbyZA8eMIPHUkaECP6rqRjApA8vWNypsdZofdEdxv-41yZxlHaCh-TFKvIlKdsFBkmOj/exec";
 
-// Your training modules (update IDs/titles as needed)
+// Your modules
 const MODULES = [
   { id: "5C_0X6G4ytI", title: "Module 1 — Test Video" },
   { id: "qZkkgkMLsvI", title: "Module 2 — Example" },
@@ -20,19 +20,15 @@ const MODULES = [
   let completedSet = new Set();
   try {
     if (student) {
-      // Unified GET — returns { ok:true, completed:[moduleIds] }
       const url = `${scriptURL}?student=${encodeURIComponent(student)}`;
       const res = await fetch(url);
       const data = await res.json();
-      if (data && data.ok && Array.isArray(data.completed)) {
-        completedSet = new Set(data.completed);
-      }
+      if (data && data.ok && Array.isArray(data.completed)) completedSet = new Set(data.completed);
     }
   } catch (err) {
     console.error("Progress fetch error:", err);
   }
 
-  // Render module tiles
   listEl.innerHTML = "";
   MODULES.forEach((m) => {
     const done = completedSet.has(m.id);
@@ -41,15 +37,13 @@ const MODULES = [
     const card = document.createElement("a");
     card.href = href;
     card.className = "block border rounded-xl p-4 shadow-sm hover:shadow-md transition bg-white/90";
-
     card.innerHTML = `
       <div class="flex items-center justify-between">
         <h2 class="font-semibold text-gray-900">${escapeHtml(m.title)}</h2>
         ${done
           ? `<span class="inline-flex items-center gap-1 text-green-700 font-semibold">✅ Completed</span>`
           : `<span class="inline-flex items-center gap-1 text-gray-500"><span class="w-2 h-2 rounded-full bg-gray-400"></span> Not started</span>`}
-      </div>
-    `;
+      </div>`;
     listEl.appendChild(card);
   });
 
