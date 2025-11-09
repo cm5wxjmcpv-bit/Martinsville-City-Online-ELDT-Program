@@ -1,16 +1,15 @@
 // ============================================
-// module.js — No-skip video + Google Sheet logging (single URL)
+// module.js — No-skip video + Sheet logging (single URL)
 // ============================================
 
-const scriptURL = "https://script.google.com/macros/s/AKfycbxVWVHPefYeNd_h4Tu1tsyX8-rIxZdUrc9VoBZmIcyYv9R71dsxgecfqfzY8Mg1MAE/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbzsgx6gMKcRRGJJA_D1whgP0SliY_I3WDA9YsDNmPfS5FDY40MW6GgmymcN49kaef2_/exec";
 
-const params   = new URLSearchParams(location.search);
-const moduleId = params.get("id") || "Unknown Module";
-const student  = (localStorage.getItem("studentName") || "").trim() || "Unknown Student";
+const params      = new URLSearchParams(location.search);
+const moduleId    = params.get("id") || "Unknown Module";
+const moduleTitle = params.get("title") || "Module";
+const student     = (localStorage.getItem("studentName") || "").trim() || "Unknown Student";
 
-let player;
-let videoDuration = 0;
-let hasCompleted  = false;
+let player, videoDuration = 0, hasCompleted = false;
 
 // YouTube IFrame API callback (loaded by module.html)
 function onYouTubeIframeAPIReady() {
@@ -22,14 +21,13 @@ function onYouTubeIframeAPIReady() {
 }
 
 function onPlayerReady() {
-  document.getElementById("moduleTitle").textContent = "Module";
+  document.getElementById("moduleTitle").textContent = moduleTitle;
   document.getElementById("status").innerText = "Press ▶ Play to begin.";
   videoDuration = player.getDuration();
   document.getElementById("customPlay").style.display = "flex";
   document.getElementById("clickBlocker").style.display = "block";
 }
 
-// Custom overlay play button
 window.startModuleVideo = function () {
   document.getElementById("customPlay").style.display = "none";
   document.getElementById("status").innerText = "Playing...";
@@ -41,7 +39,7 @@ function onPlayerStateChange(e) {
   if (e.data === YT.PlayerState.ENDED && !hasCompleted) markAsComplete();
 }
 
-// Fades video to black before end
+// Fade to black during last 5s to hide YouTube suggestions
 function monitorForFade() {
   const fadeOverlay = document.getElementById("fadeOverlay");
   const timer = setInterval(() => {
@@ -52,19 +50,22 @@ function monitorForFade() {
   }, 500);
 }
 
-// Logs completion to Google Sheet (same URL handles POST + GET)
+// Logs completion to Google Sheet (form POST → no preflight issues)
 async function markAsComplete() {
   hasCompleted = true;
 
-  const btn    = document.getElementById("markComplete");
+  const btn = document.getElementById("markComplete");
   const status = document.getElementById("status");
   btn.disabled = true;
   btn.innerText = "Completed ✅";
   status.innerHTML = "✅ <span class='text-green-600 font-semibold'>Marked Complete</span>";
 
   try {
-    // Form POST (avoids preflight/CORS issues)
-    const body = new URLSearchParams({ student, module: moduleId });
+    const body = new URLSearchParams({
+      student,
+      module: moduleId,
+      title: moduleTitle
+    });
     await fetch(scriptURL, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
@@ -75,7 +76,6 @@ async function markAsComplete() {
   }
 }
 
-// Backup manual completion button
 document.getElementById("markComplete").addEventListener("click", () => {
   if (!hasCompleted) markAsComplete();
 });
