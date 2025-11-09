@@ -1,8 +1,8 @@
 // ============================================
-// module.js — No-skip video + Sheet logging (single URL)
+// module.js — No-skip video + Sheet logging
 // ============================================
 
-const scriptURL = "https://script.google.com/macros/s/AKfycbzsgx6gMKcRRGJJA_D1whgP0SliY_I3WDA9YsDNmPfS5FDY40MW6GgmymcN49kaef2_/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbyZA8eMIPHUkaECP6rqRjApA8vWNypsdZofdEdxv-41yZxlHaCh-TFKvIlKdsFBkmOj/exec";
 
 const params      = new URLSearchParams(location.search);
 const moduleId    = params.get("id") || "Unknown Module";
@@ -39,7 +39,6 @@ function onPlayerStateChange(e) {
   if (e.data === YT.PlayerState.ENDED && !hasCompleted) markAsComplete();
 }
 
-// Fade to black during last 5s to hide YouTube suggestions
 function monitorForFade() {
   const fadeOverlay = document.getElementById("fadeOverlay");
   const timer = setInterval(() => {
@@ -50,7 +49,6 @@ function monitorForFade() {
   }, 500);
 }
 
-// Logs completion to Google Sheet (form POST → no preflight issues)
 async function markAsComplete() {
   hasCompleted = true;
 
