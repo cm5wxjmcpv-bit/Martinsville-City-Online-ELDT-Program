@@ -1,4 +1,4 @@
-// auth.js — site-wide login + session guard
+// js/auth.js — site-wide login + session guard
 
 // 🔐 Set your site password here
 const PORTAL_PASSWORD = "CDL2025!";
@@ -12,7 +12,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("loginBtn");
   if (btn) btn.addEventListener("click", login);
 
-  // Press Enter to submit
   const form = document.getElementById("loginForm");
   if (form) {
     form.addEventListener("submit", (e) => {
@@ -46,20 +45,18 @@ function showErr(msg) {
   }
 }
 
-// ---------- Session helpers (used by inner pages) ----------
+// ---------- Session helpers ----------
 function requireLogin() {
   if (localStorage.getItem(SESSION_KEY) !== "yes") {
     window.location.replace("index.html");
   }
 }
-
 function logout() {
   localStorage.removeItem(SESSION_KEY);
-  // If you also want to clear the stored name, uncomment:
-  // localStorage.removeItem(STUDENT_KEY);
   window.location.replace("index.html");
 }
 
-// Expose globally for inline calls
+// Make sure globals exist even if bundlers change scope
+window.login = login;
 window.requireLogin = requireLogin;
 window.logout = logout;
