@@ -1,19 +1,19 @@
-/* GLOBAL BACKGROUND */
+/* GLOBAL BACKGROUND (responsive) */
 body {
-  background: #f6f7fb url("background.png") center center / 260px no-repeat fixed;
+  background-image: url("background.png");
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-position: center top;
+  background-size: clamp(260px, 32vw, 560px);
+  background-color: #f6f7fb;
   min-height: 100vh;
 }
+@media (max-width: 600px) {
+  body { background-size: 220px; background-position: center 20px; }
+}
 
-/* Basic shared styles */
-.error {
-  color: #b00020;
-  font-weight: 700;
-  margin-top: 8px;
-  text-align: center;
-}
-.topbar {
-  display:flex; justify-content:space-between; align-items:center;
-  padding:14px 18px; background:#0f2744; color:#fff;
-}
+/* shared bits */
+.error { color:#b00020; font-weight:700; margin-top:8px; text-align:center; }
+.topbar { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; background:#0f2744; color:#fff; }
 .topbar a { color:#cfe2ff; text-decoration:underline; font-size:14px; }
-.container { max-width:1100px; margin:18px auto; padding:0 16px; }
+.container { max-width:1100px; margin:18px auto; padding:0 16px; } 
