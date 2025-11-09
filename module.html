@@ -4,58 +4,33 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Martinsville CDL / ELDT Training Module</title>
-
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css" />
-    <link rel="icon" type="image/png" href="background.png" />
+    <link rel="stylesheet" href="css/style.css?v=20" />
+    <link rel="icon" type="image/png" href="assets/background.png" />
   </head>
-
   <body class="min-h-screen bg-gray-50 p-2 sm:p-4">
     <div class="card mx-auto text-center w-full max-w-screen-lg">
-      <!-- Header -->
       <div class="flex items-center justify-between mb-3 sm:mb-4">
-        <h1 id="moduleTitle" class="text-xl sm:text-2xl font-semibold text-gray-900">
-          Module
-        </h1>
+        <h1 id="moduleTitle" class="text-xl sm:text-2xl font-semibold text-gray-900">Module</h1>
         <a href="dashboard.html" class="text-sm underline text-gray-700 hover:text-blue-600">Back</a>
       </div>
 
-      <!-- Video area -->
-      <div
-        id="playerWrap"
-        class="relative overflow-hidden rounded-lg bg-black w-full mx-auto"
-        style="aspect-ratio: 16/9; max-width: 1200px;"
-      >
-        <!-- YouTube target -->
+      <div id="playerWrap" class="relative overflow-hidden rounded-lg bg-black w-full mx-auto" style="aspect-ratio: 16/9; max-width: 1200px;">
         <div id="player" class="w-full h-full"></div>
-
-        <!-- Fade to black near the end -->
-        <div
-          id="fadeOverlay"
-          class="absolute inset-0 bg-black opacity-0 pointer-events-none transition-opacity duration-300 z-20"
-        ></div>
-
-        <!-- Big Play button (mobile-safe) -->
-        <button
-          id="customPlay"
-          class="absolute inset-0 z-30 flex items-center justify-center text-white text-lg sm:text-xl font-semibold"
-          aria-label="Play video"
-          onclick="window.startModuleVideo()"
-        >
+        <div id="fadeOverlay" class="absolute inset-0 bg-black opacity-0 pointer-events-none transition-opacity duration-300 z-20"></div>
+        <button id="customPlay" class="absolute inset-0 z-30 flex items-center justify-center text-white text-lg sm:text-xl font-semibold" aria-label="Play video">
           <span class="px-5 py-3 sm:px-6 sm:py-3.5 rounded-lg bg-black/50 border border-white/30">▶ Play</span>
         </button>
-
-        <!-- Click-blocker (prevents scrubbing/pausing) -->
         <div id="clickBlocker" class="absolute inset-0 z-10"></div>
       </div>
 
-      <!-- Completion -->
       <button id="markComplete" class="btn mt-4" disabled>Mark Complete</button>
       <p id="status" class="text-gray-600 mt-2">Press Play to begin.</p>
     </div>
-  <script src="https://www.youtube.com/iframe_api"></script>
-<script src="js/module.js?v=702"></script>
-  <script src="js/auth.js?v=830"></script>
-<script>requireLogin();</script>
-</body>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="js/auth.js?v=10"></script>
+    <script src="js/module.js?v=10"></script>
+    <script>requireLogin();</script>
+  </body>
 </html>

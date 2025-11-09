@@ -1,65 +1,69 @@
-// ============================================
-// test.js — grade quiz + log score
-// ============================================
+// Simple quiz engine; logs score to Google Sheet
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyZA8eMIPHUkaECP6rqRjApA8vWNypsdZofdEdxv-41yZxlHaCh-TFKvIlKdsFBkmOj/exec";
+const PASSING = 0.8;
 
-const scriptURL = "https://script.google.com/macros/s/AKfycbyZA8eMIPHUkaECP6rqRjApA8vWNypsdZofdEdxv-41yZxlHaCh-TFKvIlKdsFBkmOj/exec";
+const QUESTIONS = [
+  { q: "What does ELDT stand for?", a: ["Entry-Level Driver Training","Engine Load Drive Test","Emergency Load Driving Techniques"], correct: 0 },
+  { q: "Air brake test includes which step?", a: ["Governor cut-out check","Carburetor priming","Alternator spin-up"], correct: 0 },
+  { q: "During pre-trip, you must:", a: ["Inspect vehicle systems","Skip tires if new","Only inspect at night"], correct: 0 },
+  { q: "Safe following distance on highway (sec)?", a: ["1","2","4"], correct: 2 },
+  { q: "Max BAC for CMV operation?", a: ["0.08%","0.04%","0.10%"], correct: 1 },
+];
 
-const student    = (localStorage.getItem("studentName") || "").trim() || "Unknown Student";
-const TEST_ID    = "final";
-const TEST_TITLE = "Final Test";
-const PASS_PCT   = 80;
-
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("quizForm");
-  const resultEl = document.getElementById("quizResult");
-  if (!form) { console.error("quizForm not found"); return; }
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const { score, total } = gradeQuiz();
-    const percent = Math.round((score / total) * 100);
-    const passed  = percent >= PASS_PCT;
-
-    if (resultEl) {
-      resultEl.innerHTML = `
-        <div class="p-3 rounded-lg border bg-white/90">
-          <div class="text-lg font-semibold ${passed ? 'text-green-700' : 'text-red-700'}">
-            ${passed ? '✅ Passed' : '❌ Not Passed'}
-          </div>
-          <div class="text-gray-800 mt-1">Score: <b>${score}</b> / ${total} (${percent}%)</div>
-        </div>`;
-      resultEl.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-
-    try {
-      const body = new URLSearchParams({
-        student,
-        testId: TEST_ID,
-        testTitle: TEST_TITLE,
-        score: String(score),
-        total: String(total),
-        percent: String(percent),
-        passed: String(passed)
-      });
-      await fetch(scriptURL, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-        body
-      });
-    } catch (err) {
-      console.error("Score log error:", err);
-    }
+function renderQuiz() {
+  const form = document.getElementById('quiz');
+  form.innerHTML = "";
+  QUESTIONS.forEach((it, idx) => {
+    const id = `q${idx}`;
+    const block = document.createElement('div');
+    block.innerHTML = `
+      <div class="font-semibold mb-2">${idx+1}. ${it.q}</div>
+      ${
+        it.a.map((opt, oi) => `
+          <label class="block">
+            <input type="radio" name="${id}" value="${oi}" class="mr-2" />
+            ${opt}
+          </label>
+        `).join('')
+      }
+    `;
+    form.appendChild(block);
   });
-});
-
-function gradeQuiz() {
-  const fieldsets = Array.from(document.querySelectorAll("fieldset[data-qid]"));
-  let score = 0, total = 0;
-  fieldsets.forEach(fs => {
-    total += 1;
-    const name = fs.getAttribute("data-qid");
-    const picked = document.querySelector(`input[name="${CSS.escape(name)}"]:checked`);
-    if (picked && picked.hasAttribute("data-correct")) score += 1;
-  });
-  return { score, total };
 }
+
+async function submitQuiz() {
+  const total = QUESTIONS.length;
+  let correct = 0;
+  QUESTIONS.forEach((it, idx) => {
+    const val = document.querySelector(`input[name="q${idx}"]:checked`);
+    if (val && Number(val.value) === it.correct) correct++;
+  });
+  const percent = correct / total;
+  const passed = percent >= PASSING;
+
+  document.getElementById('result').textContent = `Score: ${Math.round(percent*100)}% — ${passed ? "PASS" : "FAIL"}`;
+
+  const student = localStorage.getItem('eldt_student') || "unknown";
+  const payload = {
+    action: "logScore",
+    student,
+    testId: "final",
+    testTitle: "Final ELDT Theory Quiz",
+    score: correct,
+    total,
+    percent: Math.round(percent*100),
+    passed
+  };
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+document.getElementById('submitBtn').addEventListener('click', submitQuiz);
+renderQuiz();

@@ -1,27 +1,48 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const body = document.getElementById('adminBody');
-  const clearBtn = document.getElementById('clearAll');
-  const rows = JSON.parse(localStorage.getItem('mfd_completions') || '[]');
+// Admin dashboard loader
+// Tries to fetch completions from Apps Script; if not implemented, falls back to localStorage mirror.
 
-  body.innerHTML = '';
-  if (rows.length === 0) {
-    body.innerHTML = '<tr><td colspan="4" class="text-gray-500 py-4">No local completion data.</td></tr>';
-  } else {
-    rows.sort((a,b)=> (b.completedAt||'').localeCompare(a.completedAt||''))
-      .forEach(r => {
-        const tr = document.createElement('tr');
-        tr.className = 'border-b';
-        tr.innerHTML = `<td class="py-2">${r.student||'-'}</td>
-                        <td class="py-2">${r.title||'-'}</td>
-                        <td class="py-2">${r.videoId||'-'}</td>
-                        <td class="py-2">${r.completedAt?new Date(r.completedAt).toLocaleString():'-'}</td>`;
-        body.appendChild(tr);
-      });
+const ENDPOINT = "https://script.google.com/macros/s/AKfycbyZA8eMIPHUkaECP6rqRjApA8vWNypsdZofdEdxv-41yZxlHaCh-TFKvIlKdsFBkmOj/exec";
+
+async function fetchCompletions() {
+  try {
+    const res = await fetch(ENDPOINT + "?action=listCompletions");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return await res.json(); // expects [{student,moduleTitle,yt,completedAt}]
+  } catch (e) {
+    // fallback to localStorage format used by module.js (none by default)
+    const local = JSON.parse(localStorage.getItem("eldt_completions") || "[]");
+    return local;
   }
+}
 
-  clearBtn.addEventListener('click', () => {
-    if (confirm('This clears local completion data stored in this browser only. Continue?')) {
-      localStorage.removeItem('mfd_completions'); location.reload();
-    }
+function renderRows(rows) {
+  const tbody = document.getElementById("adminBody");
+  tbody.innerHTML = "";
+  if (!rows.length) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = '<td class="py-3 text-gray-500" colspan="4">No completions yet.</td>';
+    tbody.appendChild(tr);
+    return;
+  }
+  rows.forEach(r => {
+    const tr = document.createElement("tr");
+    tr.className = "border-b";
+    tr.innerHTML = `
+      <td class="py-2">${r.student || ""}</td>
+      <td class="py-2">${r.moduleTitle || ""}</td>
+      <td class="py-2">${r.yt || r.videoId || ""}</td>
+      <td class="py-2">${r.completedAt || r.timestamp || ""}</td>
+    `;
+    tbody.appendChild(tr);
   });
+}
+
+document.getElementById("clearAll")?.addEventListener("click", () => {
+  localStorage.removeItem("eldt_completions");
+  renderRows([]);
 });
+
+(async () => {
+  const rows = await fetchCompletions();
+  renderRows(rows);
+})();
